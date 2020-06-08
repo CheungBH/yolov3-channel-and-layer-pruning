@@ -17,9 +17,11 @@ def test(cfg,
          conf_thres=0.001,
          nms_thres=0.5,
          save_json=False,
-         model=None):
+         model=None,
+         writer=None):
     
     # Initialize/load model and set device
+
     if model is None:
         device = torch_utils.select_device(opt.device)
         verbose = True
@@ -51,6 +53,7 @@ def test(cfg,
     dataloader = DataLoader(dataset,
                             batch_size=batch_size,
                             num_workers=min([os.cpu_count(), batch_size, 16]),
+                            shuffle=True,
                             pin_memory=True,
                             collate_fn=dataset.collate_fn)
 
@@ -60,6 +63,7 @@ def test(cfg,
     s = ('%20s' + '%10s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP', 'F1')
     p, r, f1, mp, mr, map, mf1 = 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3)
+    write_tb = True
     jdict, stats, ap, ap_class = [], [], [], []
     for batch_i, (imgs, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         targets = targets.to(device)
@@ -79,6 +83,12 @@ def test(cfg,
 
         # Run NMS
         output = non_max_suppression(inf_out, conf_thres=conf_thres, nms_thres=nms_thres)
+        all_none = [None] * len(output)
+        #
+        # if writer and None not in output and write_tb:
+        #     outs = out2ls(output)
+        #     write_tb = False
+        #     plot_output(imgs, outs, writer)
 
         # Statistics per image
         for si, pred in enumerate(output):

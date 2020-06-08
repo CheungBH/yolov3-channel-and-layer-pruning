@@ -841,7 +841,7 @@ def plot_evolution_results(hyp):  # from utils.utils import *; plot_evolution_re
     plt.savefig('evolve.png', dpi=200)
 
 
-def plot_results(start=0, stop=0):  # from utils.utils import *; plot_results()
+def plot_results(dir, start=0, stop=0):  # from utils.utils import *; plot_results()
     # Plot training results files 'results*.txt'
     fig, ax = plt.subplots(2, 5, figsize=(14, 7))
     ax = ax.ravel()
@@ -862,7 +862,7 @@ def plot_results(start=0, stop=0):  # from utils.utils import *; plot_results()
 
     fig.tight_layout()
     ax[1].legend()
-    fig.savefig('results.png', dpi=200)
+    fig.savefig(os.path.join(dir, 'results.png'), dpi=200)
 
 
 def plot_results_overlay(start=0, stop=0):  # from utils.utils import *; plot_results_overlay()
@@ -946,3 +946,44 @@ def distillation_loss2(model, targets, output_s, output_t):
         reg_ratio = reg_num / reg_nb
 
     return lcls * Lambda_cls + lbox * Lambda_box, reg_ratio
+
+def bboxes_iou(bboxes_a, bboxes_b, xyxy=True):
+    """Calculate the Intersection of Unions (IoUs) between bounding boxes.
+    IoU is calculated as a ratio of area of the intersection
+    and area of the union.
+
+    Args:
+        bbox_a (array): An array whose shape is :math:`(N, 4)`.
+            :math:`N` is the number of bounding boxes.
+            The dtype should be :obj:`numpy.float32`.
+        bbox_b (array): An array similar to :obj:`bbox_a`,
+            whose shape is :math:`(K, 4)`.
+            The dtype should be :obj:`numpy.float32`.
+    Returns:
+        array:
+        An array whose shape is :math:`(N, K)`. \
+        An element at index :math:`(n, k)` contains IoUs between \
+        :math:`n` th bounding box in :obj:`bbox_a` and :math:`k` th bounding \
+        box in :obj:`bbox_b`.
+
+    from: https://github.com/chainer/chainercv
+    """
+    if bboxes_a.shape[1] != 4 or bboxes_b.shape[1] != 4:
+        raise IndexError
+
+    if xyxy:
+        tl = torch.max(bboxes_a[:, None, :2], bboxes_b[:, :2])
+        br = torch.min(bboxes_a[:, None, 2:], bboxes_b[:, 2:])
+        area_a = torch.prod(bboxes_a[:, 2:] - bboxes_a[:, :2], 1)
+        area_b = torch.prod(bboxes_b[:, 2:] - bboxes_b[:, :2], 1)
+    else:
+        tl = torch.max((bboxes_a[:, None, :2] - bboxes_a[:, None, 2:] / 2),
+                        (bboxes_b[:, :2] - bboxes_b[:, 2:] / 2))
+        br = torch.min((bboxes_a[:, None, :2] + bboxes_a[:, None, 2:] / 2),
+                        (bboxes_b[:, :2] + bboxes_b[:, 2:] / 2))
+
+        area_a = torch.prod(bboxes_a[:, 2:], 1)
+        area_b = torch.prod(bboxes_b[:, 2:], 1)
+    en = (tl < br).type(tl.type()).prod(dim=2)
+    area_i = torch.prod(br - tl, 2) * en  # * ((tl < br).all())
+    return area_i / (area_a[:, None] + area_b - area_i)

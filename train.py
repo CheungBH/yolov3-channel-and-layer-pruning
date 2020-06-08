@@ -9,7 +9,9 @@ from models import *
 from utils.datasets import *
 from utils.utils import *
 from utils.prune_utils import *
+from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
+from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -17,10 +19,8 @@ try:  # Mixed precision training https://github.com/NVIDIA/apex
 except:
     mixed_precision = False  # not installed
 
-wdir = 'weights' + os.sep  # weights dir
-last = wdir + 'last.pt'
-best = wdir + 'best.pt'
-results_file = 'results.txt'
+titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
+          'Precision', 'Recall', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification', 'soft_loss']
 
 # Hyperparameters (j-series, 50.5 mAP yolov3-320) evolved by @ktian08 https://github.com/ultralytics/yolov3/issues/310
 hyp = {'giou': 1.582,  # giou loss gain
@@ -49,6 +49,25 @@ if f:
         hyp[k] = v
 
 
+def res2list(res):
+    ls = []
+    for item in res:
+        if isinstance(item, torch.Tensor):
+            ls.append(item.tolist())
+        else:
+            ls.append(item)
+    return ls
+
+def update_result(best, curr):
+    for idx in [0,1,3,8,9,11]:
+        if best[idx] > curr[idx]:
+            best[idx] = curr[idx]
+    for idx in [2,4,5,6,7,10]:
+        if best[idx] < curr[idx]:
+            best[idx] = curr[idx]
+    return best
+
+
 def train():
     cfg = opt.cfg
     t_cfg = opt.t_cfg  #teacher model cfg for knowledge distillation
@@ -59,6 +78,28 @@ def train():
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
     weights = opt.weights  # initial training weights
     t_weights = opt.t_weights  #teacher model weights
+
+    if "finetune" in opt.wdir:
+        wdir = opt.wdir + os.sep
+    else:
+        wdir = os.path.join('weights', opt.wdir) + os.sep  # weights dir
+
+    if "last" not in weights and "test" not in wdir:
+        os.makedirs(wdir)
+    if "test" in wdir:
+        os.makedirs(wdir, exist_ok=True)
+
+    last = wdir + 'last.pt'
+    best = wdir + 'best.pt'
+    results_file = os.path.join(wdir, 'results.txt')
+    bn_file = os.path.join(wdir, "bn.txt")
+
+    opt.weights = last if opt.resume else opt.weights
+
+    if "finetune" in wdir:
+        tb_writer = SummaryWriter(os.path.join("runs", wdir[9:]))
+    else:
+        tb_writer = SummaryWriter(os.path.join("runs", wdir[8:-1]))
 
     if 'pw' not in opt.arc:  # remove BCELoss positive weights
         hyp['cls_pw'] = 1.
@@ -85,6 +126,8 @@ def train():
 
     # Initialize model
     model = Darknet(cfg, (img_size, img_size), arc=opt.arc).to(device)
+    # model = YOLOv3(num_classes = 1, ignore_thre=0.7, label_smooth = False).to(device)
+
     if t_cfg:
         t_model = Darknet(t_cfg, (img_size, img_size), arc=opt.arc).to(device)
 
@@ -95,6 +138,11 @@ def train():
             pg1 += [v]  # parameter group 1 (apply weight_decay)
         else:
             pg0 += [v]  # parameter group 0
+
+    flops = print_model_param_flops(model)
+    params = print_model_param_nums(model)
+    print("The FLOPs of current model is {}".format(flops))
+    print("The params of current model is {}".format(params))
 
     if opt.adam:
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
@@ -108,6 +156,14 @@ def train():
     start_epoch = 0
     best_fitness = 0.
     attempt_download(weights)
+
+    with open(results_file, 'a+') as file:
+        file.write("The FLOPs of current model is {}\n".format(flops))
+        file.write("The params of current model is {}\n\n".format(params))
+        file.write(('\n' + '%10s' * 17) % (
+            'Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'soft', 'rratio', 'targets', 'img_size',
+            "P", "R", "mAP", "F1", "test_GIoU", "test_obj", "test_cls\n"))
+
     if weights.endswith('.pt'):  # pytorch format
         # possible weights are 'last.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
         if opt.bucket:
@@ -156,6 +212,7 @@ def train():
         print('<.....................using knowledge distillation.......................>')
         print('teacher model:', t_weights, '\n')
 
+    mob = True
 
     if opt.prune==1:
         CBL_idx, _, prune_idx, shortcut_idx, _=parse_module_defs2(model.module_defs)
@@ -263,7 +320,7 @@ def train():
     # Dataloader
     dataloader = torch.utils.data.DataLoader(dataset,
                                              batch_size=batch_size,
-                                             num_workers=min([os.cpu_count(), batch_size, 16]),
+                                             num_workers=11,
                                              shuffle=not opt.rect,  # Shuffle=True unless rectangular training is used
                                              pin_memory=True,
                                              collate_fn=dataset.collate_fn)
@@ -282,7 +339,11 @@ def train():
     maps = np.zeros(nc)  # mAP per class
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
+    best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
+
     print('Starting %s for %g epochs...' % ('prebias' if opt.prebias else 'training', epochs))
+
+
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         model.train()
         #print('learning rate:',optimizer.param_groups[0]['lr'])
@@ -312,7 +373,6 @@ def train():
             lr = adjust_learning_rate(optimizer, 0.1, epoch, ni, nb)
             if i == 0:
                 print('learning rate:', lr)
-
 
             imgs = imgs.to(device)
             targets = targets.to(device)
@@ -415,29 +475,36 @@ def train():
                                               img_size=opt.img_size,
                                               model=model,
                                               conf_thres=0.001 if final_epoch and epoch > 0 else 0.1,  # 0.1 for speed
-                                              save_json=final_epoch and epoch > 0 and 'coco.data' in data)
+                                              save_json=final_epoch and epoch > 0 and 'coco.data' in data,
+                                              writer=tb_writer)
 
         # Write epoch results
         with open(results_file, 'a') as f:
             f.write(s + '%10.3g' * 7 % results + '\n')  # P, R, mAP, F1, test_losses=(GIoU, obj, cls)
 
+        tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1], dataformats='HWC')
+
         # Write Tensorboard results
         if tb_writer:
             x = list(mloss) + list(results) + [msoft_target]
-            titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
-                      'Precision', 'Recall', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification', 'soft_loss']
             for xi, title in zip(x, titles):
                 tb_writer.add_scalar(title, xi, epoch)
+
+            best_result = update_result(best_result, x)
             bn_weights = gather_bn_weights(model.module_list, prune_idx)
-            tb_writer.add_histogram('bn_weights/hist', bn_weights.numpy(), epoch, bins='doane')
+            bn_numpy = bn_weights.numpy()
+            with open(bn_file, "a+") as f:
+                f.write("{}: {}\n".format(epoch, str(np.mean(bn_numpy))))
+            tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         # Update best mAP
-        fitness = results[2]  # mAP
-        if fitness > best_fitness:
+        fitness, P = results[2], results[0]  # mAP
+        if fitness > best_fitness and P > 0.5:
             best_fitness = fitness
 
         # Save training results
         save = (not opt.nosave) or (final_epoch and not opt.evolve) or opt.prebias
+        # save = True
         if save:
             with open(results_file, 'r') as f:
                 # Create checkpoint
@@ -472,28 +539,28 @@ def train():
         tb_writer.add_histogram('after_train_perlayer_bn_weights/hist', bn_weights.numpy(), idx, bins='doane')
 
     # end training
+    with open(results_file, "a+") as f:
+        f.write("\n")
+        f.write("{},{},".format(flops, params))
+        res = res2list(best_result)
+        for i in res:
+            f.write("{},".format(str(i)))
+
     if len(opt.name):
         os.rename('results.txt', 'results_%s.txt' % opt.name)
-    plot_results()  # save as results.png
+    plot_results(wdir)  # save as results.png
     print('%g epochs completed in %.3f hours.\n' % (epoch - start_epoch + 1, (time.time() - t0) / 3600))
     dist.destroy_process_group() if torch.cuda.device_count() > 1 else None
     torch.cuda.empty_cache()
     return results
 
 
-def prebias():
-    # trains output bias layers for 1 epoch and creates new backbone
-    if opt.prebias:
-        train()  # transfer-learn yolo biases for 1 epoch
-        create_backbone(last)  # saved results as backbone.pt
-        opt.weights = wdir + 'backbone.pt'  # assign backbone
-        opt.prebias = False  # disable prebias
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=273)  # 500200 batches at bs 16, 117263 images = 273 epochs
     parser.add_argument('--batch-size', type=int, default=16)  # effective bs = batch_size * accumulate = 16 * 4 = 64
+    parser.add_argument('--wdir', type=str, default="test")
     parser.add_argument('--accumulate', type=int, default=2, help='batches to accumulate before optimizing')
     parser.add_argument('--cfg', type=str, default='cfg/yolov3-spp.cfg', help='cfg file path')
     parser.add_argument('--t_cfg', type=str, default='', help='teacher model cfg file path for knowledge distillation')
@@ -524,7 +591,7 @@ if __name__ == '__main__':
     
     
     opt = parser.parse_args()
-    opt.weights = last if opt.resume else opt.weights
+
     print(opt)
     device = torch_utils.select_device(opt.device, apex=mixed_precision)
 
@@ -534,11 +601,10 @@ if __name__ == '__main__':
             # Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/
         from torch.utils.tensorboard import SummaryWriter
 
-        tb_writer = SummaryWriter()
         # except:
         #     pass
 
-        prebias()  # optional
+        # prebias()  # optional
         train()  # train normally
 
     else:  # Evolve hyperparameters (optional)
@@ -576,7 +642,16 @@ if __name__ == '__main__':
                 hyp[k] = np.clip(hyp[k], v[0], v[1])
 
             # Train mutation
-            prebias()
+            # def prebias():
+            #     # trains output bias layers for 1 epoch and creates new backbone
+            #     if opt.prebias:
+            #         train()  # transfer-learn yolo biases for 1 epoch
+            #         create_backbone(last)  # saved results as backbone.pt
+            #         opt.weights = wdir + 'backbone.pt'  # assign backbone
+            #         opt.prebias = False  # disable prebias
+            #
+            #
+            # prebias()
             results = train()
 
             # Write mutation results
