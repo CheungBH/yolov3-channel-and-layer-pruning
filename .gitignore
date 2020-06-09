@@ -46,4 +46,9 @@ yolo
 SPPE
 log
 Video
+weights
+prune_result
+runs
+extract
+finetune
 
