@@ -23,6 +23,7 @@ last = wdir + 'last.pt'
 best = wdir + 'best.pt'
 results_file = os.path.join(wdir, 'results.txt')
 
+
 # Hyperparameters (j-series, 50.5 mAP yolov3-320) evolved by @ktian08 https://github.com/ultralytics/yolov3/issues/310
 hyp = {'giou': 1.582,  # giou loss gain
        'cls': 27.76,  # cls loss gain  (CE=~1.0, uCE=~20)
