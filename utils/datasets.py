@@ -591,7 +591,11 @@ def load_mosaic(self, index):
             # else:
                 # labels = np.zeros((0,5), dtype=np.float32)
 
-            labels4.append(labels)
+            try:
+                labels4.append(labels)
+            except:
+                print("x is {}".format(x))
+                print("...{}".format(self.label_files[index]))
     labels4 = np.concatenate(labels4, 0)
 
     # hyp = self.hyp

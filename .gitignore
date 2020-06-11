@@ -46,4 +46,19 @@ yolo
 SPPE
 log
 Video
+weights
+prune_result
+runs
+extract
+finetune
+train_cmd.py
+*.zip
+*.jpg
+output
+video
+data
+
+
+
+
 

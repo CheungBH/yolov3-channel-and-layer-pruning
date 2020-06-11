@@ -11,7 +11,9 @@ from utils.utils import *
 from utils.prune_utils import *
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
-from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
+# from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
+
+# --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -474,7 +476,7 @@ def train():
                                               batch_size=batch_size,
                                               img_size=opt.img_size,
                                               model=model,
-                                              conf_thres=0.001 if final_epoch and epoch > 0 else 0.1,  # 0.1 for speed
+                                              conf_thres=0.1 if final_epoch and epoch > 0 else 0.1,  # 0.1 for speed
                                               save_json=final_epoch and epoch > 0 and 'coco.data' in data,
                                               writer=tb_writer)
 
@@ -482,10 +484,12 @@ def train():
         with open(results_file, 'a') as f:
             f.write(s + '%10.3g' * 7 % results + '\n')  # P, R, mAP, F1, test_losses=(GIoU, obj, cls)
 
-        tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1], dataformats='HWC')
 
         # Write Tensorboard results
         if tb_writer:
+            tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1],
+                                dataformats='HWC')
+
             x = list(mloss) + list(results) + [msoft_target]
             for xi, title in zip(x, titles):
                 tb_writer.add_scalar(title, xi, epoch)
@@ -562,9 +566,9 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=16)  # effective bs = batch_size * accumulate = 16 * 4 = 64
     parser.add_argument('--wdir', type=str, default="test")
     parser.add_argument('--accumulate', type=int, default=2, help='batches to accumulate before optimizing')
-    parser.add_argument('--cfg', type=str, default='cfg/yolov3-spp.cfg', help='cfg file path')
+    parser.add_argument('--cfg', type=str, default='cfg/yolov3-1cls.cfg', help='cfg file path')
     parser.add_argument('--t_cfg', type=str, default='', help='teacher model cfg file path for knowledge distillation')
-    parser.add_argument('--data', type=str, default='data/coco.data', help='*.data file path')
+    parser.add_argument('--data', type=str, default='data/ceiling.data', help='*.data file path')
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67% - 150%) img_size every 10 batches')
     parser.add_argument('--img_size', type=int, default=416, help='inference size (pixels)')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
@@ -576,7 +580,7 @@ if __name__ == '__main__':
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--img-weights', action='store_true', help='select training images by weight')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--weights', type=str, default='', help='initial weights')  # i.e. weights/darknet.53.conv.74
+    parser.add_argument('--weights', type=str, default='weights/darknet53.conv.74', help='initial weights')  # i.e. weights/darknet.53.conv.74
     parser.add_argument('--t_weights', type=str, default='', help='teacher model weights')
     parser.add_argument('--arc', type=str, default='defaultpw', help='yolo architecture')  # defaultpw, uCE, uBCE
     parser.add_argument('--prebias', action='store_true', help='transfer-learn yolo biases prior to training')
