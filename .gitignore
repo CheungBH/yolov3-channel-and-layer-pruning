@@ -51,4 +51,7 @@ prune_result
 runs
 extract
 finetune
-
+video
+train_cmd.py
+data
+tmp.jpg

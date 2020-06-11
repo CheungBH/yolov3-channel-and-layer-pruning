@@ -225,6 +225,16 @@ def train():
         if opt.sr:
             print('normal sparse training ')
 
+    if opt.freeze:
+        if len(list(model.named_parameters())) > 200:
+            freeze_num = int(opt.freeze_percent * 75)
+        for k, p in model.named_parameters():
+            if "BatchNorm2d" in k:
+                p.requires_grad = False
+            elif int(k.split(".")[1]) < freeze_num:
+                p.requires_grad = False
+            else:
+                p.requires_grad = True
 
     if opt.transfer or opt.prebias:  # transfer learning edge (yolo) layers
         nf = int(model.module_defs[model.yolo_layers[0] - 1]['filters'])  # yolo layer size (i.e. 255)
@@ -591,6 +601,8 @@ if __name__ == '__main__':
     parser.add_argument('--sparsity-regularization', '-sr', dest='sr', action='store_true',
                         help='train with channel sparsity regularization')
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
+    parser.add_argument("--freeze_percent", type=float, default=0, help='percent of freezing')
+    parser.add_argument('--freeze', type=bool, default=False, help='whether freeze')  # i.e. weights/darknet.53.conv.74
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
     
     
