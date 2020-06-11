@@ -226,6 +226,7 @@ def train():
             print('normal sparse training ')
 
     if opt.freeze:
+        freeze_num = 19
         if len(list(model.named_parameters())) > 200:
             freeze_num = int(opt.freeze_percent * 75)
         for k, p in model.named_parameters():
