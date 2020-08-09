@@ -764,9 +764,12 @@ def out2ls(out):
     tensor = torch.Tensor
     ls = []
     for idx, item in enumerate(out):
-        item = item.tolist()
-        for i in item:
-            ls.append([idx, 0, i[0], i[1], i[2], i[3]])
+        if item is None:
+            ls.append([idx,0,0,1,0,1])
+        else:
+            item = item.tolist()
+            for i in item:
+                ls.append([idx, 0, i[0], i[1], i[2], i[3]])
     return tensor(ls)
 
 
