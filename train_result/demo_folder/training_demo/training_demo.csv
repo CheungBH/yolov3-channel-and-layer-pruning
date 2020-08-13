@@ -1,0 +1,4 @@
+type,activation,Batch-size,freeze,sparse,sparse_decay,epochs,LR,optimize,weightDecay,expFloder,weights,save_interval,multi-scale,img_size,rect,data
+spp,leaky,16,FALSE,,,100,0.00025,adam,0,gray,weights/darknet53.conv.74/,20,TRUE,608,FALSE,data/jump/jump.data
+spp,leaky,16,FALSE,,,100,0.00025,adam,0,gray,weights/darknet53.conv.74/,20,TRUE,609,TRUE,data/jump/jump.data
+spp,leaky,16,FALSE,,,100,0.00025,adam,0,gray,weights/darknet53.conv.74/,20,TRUE,610,TRUE,data/jump/jump.data

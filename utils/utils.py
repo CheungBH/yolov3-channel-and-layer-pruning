@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-
+import time
 from . import torch_utils  # , google_utils
 
 matplotlib.rc('font', **{'size': 11})
@@ -764,12 +764,9 @@ def out2ls(out):
     tensor = torch.Tensor
     ls = []
     for idx, item in enumerate(out):
-        if item is None:
-            ls.append([idx,0,0,1,0,1])
-        else:
-            item = item.tolist()
-            for i in item:
-                ls.append([idx, 0, i[0], i[1], i[2], i[3]])
+        item = item.tolist()
+        for i in item:
+            ls.append([idx, 0, i[0], i[1], i[2], i[3]])
     return tensor(ls)
 
 
@@ -985,3 +982,15 @@ def distillation_loss2(model, targets, output_s, output_t):
         reg_ratio = reg_num / reg_nb
 
     return lcls * Lambda_cls + lbox * Lambda_box, reg_ratio
+
+def get_inference_time(model, repeat=10, height=416, width=416):
+    model.eval()
+    start = time.time()
+    with torch.no_grad():
+        inp = torch.randn(1, 3, height, width)
+        inp = inp.cuda()
+        for i in range(repeat):
+            output = model(inp)
+    avg_infer_time = (time.time() - start) / repeat
+
+    return round(avg_infer_time, 4)

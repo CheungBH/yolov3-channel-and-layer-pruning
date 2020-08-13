@@ -9,24 +9,7 @@ import time
 from utils.utils import *
 from utils.prune_utils import *
 import argparse
-from utils.compute_flops import print_model_param_nums, print_model_param_flops
 
-
-def write_info(m, metric, string):
-    params = print_model_param_nums(m)
-    flops = print_model_param_flops(m)
-    if string == "origin":
-        f.write(('\n' + '%70s' * 1) % ("{}".format(os.path.join(folder_str, "origin"))))
-    else:
-        f.write(('\n' + '%70s' * 1) % ("{}".format(folder_str)))
-    f.write(('%15s' * 1) % ("{}".format(flops)))
-    processed_metric = [round(m, 4) for m in metric[0]]
-    inf_time, _ = obtain_avg_forward_time(random_input, m)
-    inf_time = round(inf_time, 4)
-    f.write(('%10s' * 9) % (
-        "{}".format(inf_time), "{}".format(params), "{}".format(processed_metric[0]), "{}".format(processed_metric[1]),
-        "{}".format(processed_metric[2]), "{}".format(processed_metric[3]), "{}".format(processed_metric[4]),
-        "{}".format(processed_metric[5]), "{}\n".format(processed_metric[6]),))
 
 
 if __name__ == '__main__':
@@ -37,11 +20,9 @@ if __name__ == '__main__':
     parser.add_argument('--shortcuts', type=int, default=8, help='how many shortcut layers will be pruned,\
         pruning one shortcut will also prune two CBL,yolov3 has 23 shortcuts')
     parser.add_argument('--img_size', type=int, default=416, help='inference size (pixels)')
-    parser.add_argument('--only_metric', type=bool, default=False, help="whether save cfg and model")
     opt = parser.parse_args()
     print(opt)
 
-    only_metric = opt.only_metric
     img_size = opt.img_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Darknet(opt.cfg, (img_size, img_size)).to(device)
@@ -52,15 +33,8 @@ if __name__ == '__main__':
         load_darknet_weights(model, opt.weights)
     print('\nloaded weights from ',opt.weights)
 
-    model_str = opt.weights.split("/")[1]
-    folder_str = f'prune_{opt.shortcuts}_shortcut'
-    dest_folder = os.path.join("prune_result", opt.weights.split("/")[1], "layer_prune", folder_str)
-    os.makedirs(dest_folder, exist_ok=True)
-    prune_res = open(os.path.join(dest_folder, "prune_res.txt"), "w")
 
-    random_input = torch.rand((1, 3, img_size, img_size)).to(device)
-
-    eval_model = lambda model:test(model=model, cfg=opt.cfg, data=opt.data, batch_size=16, img_size=img_size, conf_thres=0.1)
+    eval_model = lambda model:test(model=model,cfg=opt.cfg, data=opt.data, batch_size=16, img_size=img_size)
     obtain_num_parameters = lambda model:sum([param.nelement() for param in model.parameters()])
 
     with torch.no_grad():
@@ -68,11 +42,13 @@ if __name__ == '__main__':
         origin_model_metric = eval_model(model)
     origin_nparameters = obtain_num_parameters(model)
 
+
     CBL_idx, Conv_idx, shortcut_idx = parse_module_defs4(model.module_defs)
     print('all shortcut_idx:', [i + 1 for i in shortcut_idx])
-    print('all shortcut_idx:', [i + 1 for i in shortcut_idx], file=prune_res)
+
 
     bn_weights = gather_bn_weights(model.module_list, shortcut_idx)
+
     sorted_bn = torch.sort(bn_weights)[0]
 
 
@@ -87,6 +63,7 @@ if __name__ == '__main__':
         bn_mean[i] = model.module_list[idx][1].weight.data.abs().mean().clone()
     _, sorted_index_thre = torch.sort(bn_mean)
     
+    
     prune_shortcuts = torch.tensor(shortcut_idx)[[sorted_index_thre[:opt.shortcuts]]]
     prune_shortcuts = [int(x) for x in prune_shortcuts]
 
@@ -97,7 +74,9 @@ if __name__ == '__main__':
     index_remain = [idx for idx in index_all if idx not in index_prune]
 
     print('These shortcut layers and corresponding CBL will be pruned :', index_prune)
-    print('These shortcut layers and corresponding CBL will be pruned :', index_prune, file=prune_res)
+
+
+
 
 
     def prune_and_eval(model, prune_shortcuts=[]):
@@ -108,17 +87,21 @@ if __name__ == '__main__':
 
                 mask = torch.zeros(bn_module.weight.data.shape[0]).cuda()
                 bn_module.weight.data.mul_(mask)
+         
 
         with torch.no_grad():
             mAP = eval_model(model_copy)[0][2]
 
         print(f'simply mask the BN Gama of to_be_pruned CBL as zero, now the mAP is {mAP:.4f}')
-        print(f'simply mask the BN Gama of to_be_pruned CBL as zero, now the mAP is {mAP:.4f}', file=prune_res)
 
 
     prune_and_eval(model, prune_shortcuts)
 
 
+
+
+
+    #%%
     def obtain_filters_mask(model, CBL_idx, prune_shortcuts):
 
         filters_mask = []
@@ -137,14 +120,17 @@ if __name__ == '__main__':
 
     CBLidx2mask = obtain_filters_mask(model, CBL_idx, prune_shortcuts)
 
+
+
     pruned_model = prune_model_keep_size2(model, CBL_idx, CBL_idx, CBLidx2mask)
 
     with torch.no_grad():
         mAP = eval_model(pruned_model)[0][2]
     print("after transfering the offset of pruned CBL's activation, map is {}".format(mAP))
-    print("after transfering the offset of pruned CBL's activation, map is {}".format(mAP), file=prune_res)
+
 
     compact_module_defs = deepcopy(model.module_defs)
+
 
     for j, module_def in enumerate(compact_module_defs):    
         if module_def['type'] == 'route':
@@ -183,7 +169,8 @@ if __name__ == '__main__':
 
     # init_weights_from_loose_model(compact_model, pruned_model, CBL_idx, Conv_idx, CBLidx2mask)
 
-    # random_input = torch.rand((1, 3, img_size, img_size)).to(device)
+
+    random_input = torch.rand((1, 3, img_size, img_size)).to(device)
 
     def obtain_avg_forward_time(input, model, repeat=200):
 
@@ -199,23 +186,11 @@ if __name__ == '__main__':
     pruned_forward_time, pruned_output = obtain_avg_forward_time(random_input, pruned_model)
     compact_forward_time, compact_output = obtain_avg_forward_time(random_input, compact_model)
 
-    if only_metric:
-        folder_name = "/".join(opt.weights.split("/")[:-1])
-        res_file = os.path.join(folder_name, "prune_result.txt")
-        if not os.path.exists(res_file):
-            f = open(res_file, "w")
-            f.write(('\n' + '%70s' * 1) % "Model")
-            f.write(('%15s' * 1) % "FLOPs")
-            f.write(('%10s' * 9) % ("Time", "Params", "P", "R", "mAP", "F1", "test_GIoU", "test_obj", "test_cls\n"))
-            with torch.no_grad():
-                origin_metric = eval_model(model)
-            write_info(model, origin_metric, "origin")
-        else:
-            f = open(res_file, "a+")
 
     # 在测试集上测试剪枝后的模型, 并统计模型的参数数量
     with torch.no_grad():
         compact_model_metric = eval_model(compact_model)
+
 
     # 比较剪枝前后参数数量的变化、指标性能的变化
     metric_table = [
@@ -225,17 +200,17 @@ if __name__ == '__main__':
         ["Inference", f'{pruned_forward_time:.4f}', f'{compact_forward_time:.4f}']
     ]
     print(AsciiTable(metric_table).table)
-    print(AsciiTable(metric_table).table, file=open(os.path.join(dest_folder, "metric.txt"), "w"))
 
-    if not only_metric:
-        cfg_name = os.path.join(dest_folder, folder_str + ".cfg")
-        pruned_cfg_file = write_cfg(cfg_name, [model.hyperparams.copy()] + compact_module_defs)
-        print(f'Config file has been saved: {pruned_cfg_file}')
 
-        model_name = os.path.join(dest_folder, folder_str + ".weights")
-        save_weights(compact_model, model_name)
-        print(f'Compact model has been saved: {model_name}')
-    else:
-        write_info(compact_model, compact_model_metric, "pruned")
-        f.close()
+    # 生成剪枝后的cfg文件并保存模型
+    pruned_cfg_name = opt.cfg.replace('/', f'/prune_{opt.shortcuts}_shortcut_')
+    pruned_cfg_file = write_cfg(pruned_cfg_name, [model.hyperparams.copy()] + compact_module_defs)
+    print(f'Config file has been saved: {pruned_cfg_file}')
+
+    compact_model_name = opt.weights.replace('/', f'/prune_{opt.shortcuts}_shortcut_')
+    if compact_model_name.endswith('.pt'):
+        compact_model_name = compact_model_name.replace('.pt', '.weights')
+
+    save_weights(compact_model, path=compact_model_name)
+    print(f'Compact model has been saved: {compact_model_name}')
 

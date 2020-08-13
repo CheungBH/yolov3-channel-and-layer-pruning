@@ -7,7 +7,7 @@ from models import *
 from utils.datasets import *
 from utils.utils import *
 
-
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def test(cfg,
          data,
          weights=None,
@@ -18,7 +18,8 @@ def test(cfg,
          nms_thres=0.5,
          save_json=False,
          model=None,
-         writer=None):
+         writer=None,
+         write_txt = None):
     
     # Initialize/load model and set device
 
@@ -49,10 +50,10 @@ def test(cfg,
     names = load_classes(data['names'])  # class names
 
     # Dataloader
-    dataset = LoadImagesAndLabels(test_path, img_size, batch_size)
+    dataset = LoadImagesAndLabels(test_path, img_size, batch_size,rect=False)
     dataloader = DataLoader(dataset,
                             batch_size=batch_size,
-                            num_workers=min([os.cpu_count(), batch_size, 16]),
+                            num_workers=1,
                             shuffle=True,
                             pin_memory=True,
                             collate_fn=dataset.collate_fn)
@@ -61,6 +62,14 @@ def test(cfg,
     model.eval()
     coco91class = coco80_to_coco91_class()
     s = ('%20s' + '%10s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP', 'F1')
+    # if write_txt:
+    #     with open('./black-results.txt', "a+") as f:
+    #         f.write("\n")
+    #         f.write(weights.split('/')[-2:][0] + '_' + weights.split('/')[-1])
+    #         f.write("\n")
+    #         f.write("\n")
+    #         f.write(s)
+    #         f.write("\n")
     p, r, f1, mp, mr, map, mf1 = 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3)
     write_tb = True
@@ -84,9 +93,8 @@ def test(cfg,
         # Run NMS
         output = non_max_suppression(inf_out, conf_thres=conf_thres, nms_thres=nms_thres)
         all_none = [None] * len(output)
-        #
-        if writer and write_tb:
-        # if writer and None not in output and write_tb:
+
+        if writer and None not in output and write_tb:
             outs = out2ls(output)
             write_tb = False
             plot_output(imgs, outs, writer)
@@ -170,7 +178,13 @@ def test(cfg,
     # Print results
     pf = '%20s' + '%10.3g' * 6  # print format
     print(pf % ('all', seen, nt.sum(), mp, mr, map, mf1))
-
+    # if write_txt:
+    #     with open('./black-results.txt', "a+") as f:
+    #         f.write("\n")
+    #         f.write(pf % ('all', seen, nt.sum(), mp, mr, map, mf1))
+    #         f.write("\n")
+            # f.write("\n")
+            # f.write(pf % (names[c], seen, nt[c], p[i], r[i], ap[i], f1[i]))
     # Print results per class
     if verbose and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
@@ -203,7 +217,7 @@ def test(cfg,
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return (mp, mr, map, mf1, *(loss / len(dataloader)).tolist()), maps
+    return ('all', seen, nt.sum(), mp, mr, map, mf1),(mp, mr, map, mf1, *(loss / len(dataloader)).tolist()), maps
 
 
 if __name__ == '__main__':
