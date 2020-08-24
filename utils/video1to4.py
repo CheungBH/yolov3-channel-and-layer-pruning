@@ -12,7 +12,7 @@ def cut_image(img, bottom=0, top=0, left=0, right=0):
 
 cnt = 0
 
-folder_name = "E:/video_0507/above"
+folder_name = r"D:\PyCharmProject\opencv\video\ceiling_analysis\0710"
 videos = [os.path.join(folder_name, video_n) for video_n in os.listdir(folder_name)]
 video_num = 0
 
