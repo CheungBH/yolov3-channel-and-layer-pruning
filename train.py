@@ -80,11 +80,12 @@ def train():
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
     weights = opt.weights  # initial training weights
     t_weights = opt.t_weights  #teacher model weights
+    ID = opt.expID
 
     if "finetune" in opt.wdir:
-        wdir = opt.wdir + os.sep
+        wdir = opt.wdir + os.sep + ID
     else:
-        wdir = os.path.join('weights', opt.wdir) + os.sep  # weights dir
+        wdir = os.path.join('weights', opt.wdir, ID) + os.sep  # weights dir
 
     if "last" not in weights and "test" not in wdir:
         os.makedirs(wdir)
@@ -565,6 +566,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=273)  # 500200 batches at bs 16, 117263 images = 273 epochs
     parser.add_argument('--batch-size', type=int, default=16)  # effective bs = batch_size * accumulate = 16 * 4 = 64
     parser.add_argument('--wdir', type=str, default="test")
+    parser.add_argument('--expID', type=str, default="default")
     parser.add_argument('--accumulate', type=int, default=2, help='batches to accumulate before optimizing')
     parser.add_argument('--cfg', type=str, default='cfg/yolov3-1cls.cfg', help='cfg file path')
     parser.add_argument('--t_cfg', type=str, default='', help='teacher model cfg file path for knowledge distillation')
@@ -593,7 +595,7 @@ if __name__ == '__main__':
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
     
-    
+
     opt = parser.parse_args()
 
     print(opt)
