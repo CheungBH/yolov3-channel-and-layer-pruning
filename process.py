@@ -1,13 +1,13 @@
 # allocate train and validation images
 import glob, os
 
-current_dir = "./data/0607ceiling_train/JPEGImages"
+current_dir = "./data/0619_ceiling_train/JPEGImages"
 print(current_dir)
 
 percentage_test = 10
 
-file_train = open('./0607ceiling_train.txt', 'w')
-file_test = open('./0607ceiling_test.txt', 'w')
+file_train = open('./0619_ceiling_train.txt', 'w')
+file_test = open('./0619_ceiling_test.txt', 'w')
 
 counter = 1
 index_test = round(100 / percentage_test)

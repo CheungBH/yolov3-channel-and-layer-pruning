@@ -1,4 +1,5 @@
 import argparse
+import csv
 
 import torch.distributed as dist
 import torch.optim as optim
@@ -14,6 +15,8 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 # from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -165,6 +168,13 @@ def train():
         file.write(('\n' + '%10s' * 17) % (
             'Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'soft', 'rratio', 'targets', 'img_size',
             "P", "R", "mAP", "F1", "test_GIoU", "test_obj", "test_cls\n"))
+
+        title = ['ID', 'cmd', 'cfg', 'Epoch', 'weights', 'batch_size', 'img_size', 'multi_scale', 'FLOPs',
+                 'params',
+                 'lr_policy', 'time_infer', 'epoch_num', 'Class', 'Images', 'Targets', 'P', 'R', 'mAP', 'F1']
+        with open(wdir + 'test.csv', 'a', newline='')as f:
+            f_csv = csv.writer(f)
+            f_csv.writerow(title)
 
     if weights.endswith('.pt'):  # pytorch format
         # possible weights are 'last.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
@@ -502,7 +512,7 @@ def train():
             tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         # Update best mAP
-        fitness, P = results[2], results[0]  # mAP
+        fitness, P = results[3], results[0]  # mAP
         if fitness > best_fitness and P > 0.5:
             best_fitness = fitness
 
@@ -656,6 +666,7 @@ if __name__ == '__main__':
             #
             #
             # prebias()
+            from torch.utils.tensorboard import SummaryWriter
             results = train()
 
             # Write mutation results
