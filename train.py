@@ -376,8 +376,9 @@ def train():
             best_epoch = epoch
 
         #Early stoping for Giou
-        if epoch >= config.warm_up:
+        if epoch == config.warm_up:
             lr = opt.LR
+        if epoch > config.warm_up:
             early_stoping_giou(list(results)[-3],list(results)[-2])#valGiou
             if early_stoping_giou.early_stop :
                 optimizer, lr = lr_decay(optimizer, lr)
