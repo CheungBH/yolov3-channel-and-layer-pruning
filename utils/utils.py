@@ -3,7 +3,7 @@ import os
 import random
 import shutil
 from pathlib import Path
-
+from cfg import config
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-
+import time
 from . import torch_utils  # , google_utils
 
 matplotlib.rc('font', **{'size': 11})
@@ -793,7 +793,10 @@ def plot_output(imgs, targets, writer, paths=None, fname='tmp.jpg'):
     fig.tight_layout()
     fig.savefig(fname, dpi=200)
     plt.close()
-    writer.add_image(fname, cv2.imread(fname)[:, :, ::-1], dataformats='HWC')
+    try:
+        writer.add_image(fname, cv2.imread(fname)[:, :, ::-1], dataformats='HWC')
+    except TypeError:
+        print('Nonetype object is not subscriptable')
 
 
 def plot_images(imgs, targets, paths=None, fname='images.jpg'):
@@ -883,18 +886,20 @@ def plot_results(dir, start=0, stop=0):  # from utils.utils import *; plot_resul
     ax = ax.ravel()
     s = ['GIoU', 'Objectness', 'Classification', 'Precision', 'Recall',
          'val GIoU', 'val Objectness', 'val Classification', 'mAP', 'F1']
-    for f in sorted(glob.glob('results*.txt') + glob.glob('../../Downloads/results*.txt')):
-        results = np.loadtxt(f, usecols=[2, 3, 4, 8, 9, 12, 13, 14, 10, 11], ndmin=2).T
-        n = results.shape[1]  # number of rows
-        x = range(start, min(stop, n) if stop else n)
-        for i in range(10):
-            y = results[i, x]
-            if i in [0, 1, 2, 5, 6, 7]:
-                y[y == 0] = np.nan  # dont show zero loss values
-            ax[i].plot(x, y, marker='.', label=f.replace('.txt', ''))
-            ax[i].set_title(s[i])
-            if i in [5, 6, 7]:  # share train and val loss y axes
-                ax[i].get_shared_y_axes().join(ax[i], ax[i - 5])
+    # for f in sorted(glob.glob('results*.txt') + glob.glob('../../Downloads/results*.txt')):
+    # for f in os.path.join(dir,'results.txt'):
+    results = np.loadtxt(os.path.join(dir,'results.txt'), usecols=[2, 3, 4, 11, 12, 15, 16, 17, 13, 14], ndmin=2,skiprows=1).T
+    # results = np.loadtxt(os.path.join(dir, 'results.txt'), usecols=[2, 3, 4, 8, 9, 12, 13, 14, 10, 11], ndmin=2).T
+    n = results.shape[1]  # number of rows
+    x = range(start, min(stop, n) if stop else n)
+    for i in range(10):
+        y = results[i, x]
+        if i in [0, 1, 2, 5, 6, 7]:
+            y[y == 0] = np.nan  # dont show zero loss values
+        ax[i].plot(x, y, marker='.', label=os.path.join(dir,'results.txt').replace('.txt', ''))
+        ax[i].set_title(s[i])
+        if i in [5, 6, 7]:  # share train and val loss y axes
+            ax[i].get_shared_y_axes().join(ax[i], ax[i - 5])
 
     fig.tight_layout()
     ax[1].legend()
@@ -982,3 +987,115 @@ def distillation_loss2(model, targets, output_s, output_t):
         reg_ratio = reg_num / reg_nb
 
     return lcls * Lambda_cls + lbox * Lambda_box, reg_ratio
+
+def get_inference_time(model, repeat=10, height=416, width=416):
+    model.eval()
+    start = time.time()
+    with torch.no_grad():
+        inp = torch.randn(1, 3, height, width)
+        inp = inp.cuda()
+        for i in range(repeat):
+            output = model(inp)
+    avg_infer_time = (time.time() - start) / repeat
+
+    return round(avg_infer_time, 4)
+
+# title = ['Epoch', 'GIoU', 'obj', 'cls', 'total',
+#                          'lr',"P", "R", "mAP", "F1", "test_GIoU", "test_obj", "test_cls"]
+def draw_graph(epoch, train_loss_ls, val_loss_ls, prmf_ls, log_dir):
+    epoch_ls = list(range(epoch))
+    train_GIou = [train_loss_ls[i][0] for i in range(len(train_loss_ls))]
+    train_Obj = [train_loss_ls[i][1] for i in range(len(train_loss_ls))]
+    train_Cls = [train_loss_ls[i][2] for i in range(len(train_loss_ls))]
+    train_Total= [train_loss_ls[i][3] for i in range(len(train_loss_ls))]
+
+    val_GIou = [val_loss_ls[i][0] for i in range(len(val_loss_ls))]
+    val_Obj = [val_loss_ls[i][1] for i in range(len(val_loss_ls))]
+    val_Cls = [val_loss_ls[i][2] for i in range(len(val_loss_ls))]
+    Precious = [prmf_ls[i][0] for i in range(len(prmf_ls))]
+    Recall = [prmf_ls[i][1] for i in range(len(prmf_ls))]
+    Map = [prmf_ls[i][2] for i in range(len(prmf_ls))]
+    F1 = [prmf_ls[i][3] for i in range(len(prmf_ls))]
+    print(val_GIou)
+    print(epoch_ls)
+    ln1, = plt.plot(epoch_ls, val_GIou, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, val_Obj, color='blue', linewidth=3.0, linestyle='-.')
+    ln3, = plt.plot(epoch_ls, val_Cls, color='yellow', linewidth=3.0, linestyle='--')
+    plt.title("val_loss")
+    plt.legend(handles=[ln1,ln2,ln3], labels=['val_GIou', 'val_Obj','val_Cls'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    # plt.show()
+    plt.savefig(os.path.join(log_dir, "val_train.jpg"))
+    plt.cla()
+
+    ln1, = plt.plot(epoch_ls, Precious, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, Recall, color='blue', linewidth=3.0, linestyle='-.')
+    ln3, = plt.plot(epoch_ls, Map, color='yellow', linewidth=5.0, linestyle='--')
+    ln4, = plt.plot(epoch_ls, F1, color='black', linewidth=5.0, linestyle='-.')
+    plt.title("P-R-map-F1")
+    plt.legend(handles=[ln1,ln2,ln3,ln4], labels=['Precious', 'Recall','Map','F1'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    # plt.show()
+    plt.savefig(os.path.join(log_dir, "P-R.jpg"))
+    plt.cla()
+
+    ln1, = plt.plot(epoch_ls, train_GIou, color='red', linewidth=3.0, linestyle='--')
+    ln2, = plt.plot(epoch_ls, train_Obj, color='blue', linewidth=3.0, linestyle='-.')
+    ln3, = plt.plot(epoch_ls, train_Cls, color='yellow', linewidth=5.0, linestyle='--')
+    ln4, = plt.plot(epoch_ls, train_Total, color='black', linewidth=5.0, linestyle='-.')
+    plt.title("Train_Loss")
+    plt.legend(handles=[ln1, ln2,ln3,ln4], labels=['train_GIou', 'train_Obj','train_Cls','train_Total'])
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')  # right边框属性设置为none 不显示
+    ax.spines['top'].set_color('none')  # top边框属性设置为none 不显示
+    # plt.show()
+    plt.savefig(os.path.join(log_dir, "train_loss.jpg"))
+    plt.cla()
+
+def adjust_learning_rate(optimizer,  epoch, iteration, epoch_size,hyp):
+    """调整学习率进行warm up和学习率衰减
+    """
+    # step_index = 0
+    if epoch < config.warm_up:
+        # 对开始的6个epoch进行warm up
+        lr = 1e-6 + (hyp['lr0'] - 1e-6) * iteration / (epoch_size * 2)
+    # else:
+    #     if epoch > Epochs * 0.7:
+    #         # 在进行总epochs的70%时，进行以gamma的学习率衰减
+    #         step_index = 1
+    #     if epoch > Epochs * 0.9:
+    #         # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
+    #         step_index = 2
+
+        # lr = hyp['lr0'] * (gamma ** (step_index))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+    return lr
+
+def lr_decay(optimizer, lr):
+    lr = lr * 0.1
+    for pg in optimizer.param_groups:
+        pg["lr"] = lr
+    return optimizer, lr
+
+def update_result(best, curr):
+    for idx in [0,1,2,3,8,9,10]:
+        if best[idx] > curr[idx]:
+            best[idx] = curr[idx]
+    for idx in [4,5,6,7]:
+        if best[idx] < curr[idx]:
+            best[idx] = curr[idx]
+    return best
+
+def res2list(res):
+    ls = []
+    for item in res:
+        if isinstance(item, torch.Tensor):
+            ls.append(item.tolist())
+        else:
+            ls.append(item)
+    return ls

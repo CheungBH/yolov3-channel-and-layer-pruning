@@ -11,7 +11,7 @@ def print_model_param_nums(model=None, multiply_adds=True):
     if model == None:
         model = torchvision.models.alexnet()
     total = sum([param.nelement() for param in model.parameters()])
-    print('  + Number of params: %.2fM' % (total / 1e6))
+    # print('  + Number of params: %.2fM' % (total / 1e6))
     return total
 
 def print_model_param_flops(model=None, input_res=224, multiply_adds=True):
@@ -103,12 +103,9 @@ def print_model_param_flops(model=None, input_res=224, multiply_adds=True):
     if model == None:
         model = torchvision.models.alexnet()
     foo(model)
-    try:
-        input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True)
-        out = model(input)
-    except:
-        input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True).cuda()
-        out = model(input)
+    input = Variable(torch.rand(3, 3, input_res, input_res), requires_grad = True).cuda()
+    out = model(input)
+
 
     total_flops = (sum(list_conv) + sum(list_linear) + sum(list_bn) + sum(list_relu) + sum(list_pooling) + sum(list_upsample))
 

@@ -38,6 +38,8 @@ def create_modules(module_defs, img_size, arc):
                 # modules.add_module('activation', Swish())
             elif mdef['activation'] == 'mish':
                 modules.add_module('activation', Mish())
+            elif mdef['activation'] == 'swish':
+                modules.add_module('activation', Swish())
 
         elif mdef['type'] == 'maxpool':
             kernel_size = int(mdef['size'])
@@ -405,7 +407,8 @@ def convert(cfg='cfg/yolov3-spp.cfg', weights='weights/yolov3-spp.weights'):
     # Load weights and save
     if weights.endswith('.pt'):  # if PyTorch format
         model.load_state_dict(torch.load(weights, map_location='cpu')['model'])
-        save_weights(model, path='converted.weights', cutoff=-1)
+        target = weights.rsplit('.',1)[0] + '.weights'
+        save_weights(model, path=target, cutoff=-1)
         print("Success: converted '%s' to 'converted.weights'" % weights)
 
     elif weights.endswith('.weights'):  # darknet format
