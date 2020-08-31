@@ -55,7 +55,7 @@ def train():
 
     opt.weights = last if opt.resume else opt.weights# if resume use the last
 
-    tb_writer = SummaryWriter('tensorboard/{}/{}'.format(opt.expFolder+'_'+opt.type,opt.expID))
+    tb_writer = SummaryWriter('tensorboard/{}/{}'.format(opt.expFolder,opt.expID))
     if 'pw' not in opt.arc:  # remove BCELoss positive weights
         config.hyp['cls_pw'] = 1.
         config.hyp['obj_pw'] = 1.
@@ -441,8 +441,8 @@ def train():
         f_csv = csv.writer(f)
         if not exist:
             title = [
-                     'ID','tpye','activation','batch_size','optimize','freeze','epoch_num','LR', 'weights',
-                     'model_location', 'folder_name','parameter','flops','infer_time',
+                     'ID','tpye','activation','batch_size','optimize','freeze','epoch_num','LR', 'weights','multi-scale',
+                     'img_size','rect','data','model_location', 'folder_name','parameter','flops','infer_time',
                 'train_GIoU', 'train_obj','train_cls',
                      'total',"P", "R", "mAP", "F1", "val_GIoU", "val_obj", "val_cls",'train_time',
                      'final_epoch','best_epoch','decay_1','decay_2'
@@ -450,7 +450,7 @@ def train():
             f_csv.writerow(title)
         infostr = [
                    opt.expID,opt.type, opt.activation,opt.batch_size, opt.optimize,opt.freeze,opt.epochs,
-                   opt.LR,opt.weights,config.computer, train_dir,params,flops,infer_time
+                   opt.LR,opt.weights,multi_scale,opt.img_size,opt.rect,opt.data,config.computer, train_dir,params,flops,infer_time
 
         ]
 
