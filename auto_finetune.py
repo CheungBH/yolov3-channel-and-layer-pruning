@@ -26,12 +26,15 @@ for folder in folders:
     wdir = path_ls[1] + "_" + path_ls[2] + "_" + path_ls[3] + "_distilled"
     cmds.append("python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights {0}/{1}.weights --epochs 100 --batch-size 32 --t_cfg cfg/yolov3-1cls.cfg --t_weights weights/gray_origin/best.pt".format(folder, folder.split("/")[-1], wdir))
     wdir = path_ls[1] + "_" + path_ls[2] + "_" + path_ls[3]
-    cmds.append(
-        "python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights {0}/{1}.weights --epochs 100 --batch-size 32".format(
-            folder, folder.split("/")[-1], wdir))
 
-    # cmds.append("python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights finetune/gray_1_225_0.01_slim_prune_prune_0.88_keep_0.01/last.pt --epochs 100 --batch-size 32".format(folder, folder.split("/")[-1], wdir))
-
+    if "gray" in folder:
+        data = "gray"
+    elif "enhanced" or "black" in folder:
+        data = "enhanced"
+    else:
+        raise ValueError
+    cmds.append("python train.py --wdir {2} --cfg {0}/{1}.cfg --data data/swim_{3}/{3}.data --weights {0}/{1}.weights "
+                "--epochs 100 --batch-size 32".format(folder, folder.split("/")[-1], wdir, data))
 
 for cmd in cmds:
     os.system(cmd)
