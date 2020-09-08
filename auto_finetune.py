@@ -24,7 +24,8 @@ for folder in folders:
         data = "enhanced"
     else:
         raise ValueError
-    cmds.append("python train.py --wdir {2} --cfg {0}/{1}.cfg --data data/swim_{3}/{3}.data --weights {0}/{1}.weights --epochs 100 --batch-size 32".format(folder, folder.split("/")[-1], wdir, data))
+    cmds.append("python train.py --wdir {2} --cfg {0}/{1}.cfg --data data/swim_{3}/{3}.data --weights {0}/{1}.weights "
+                "--epochs 100 --batch-size 32".format(folder, folder.split("/")[-1], wdir, data))
 
 for cmd in cmds:
     # os.system(cmd)
