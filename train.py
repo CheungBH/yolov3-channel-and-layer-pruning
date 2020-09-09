@@ -486,7 +486,7 @@ def train():
                                               batch_size=batch_size,
                                               img_size=opt.img_size,
                                               model=model,
-                                              conf_thres=0.1 if final_epoch and epoch > 0 else 0.1,  # 0.1 for speed
+                                              conf_thres=0.5,  # 0.1 for speed
                                               save_json=final_epoch and epoch > 0 and 'coco.data' in data,
                                               writer=tb_writer)
 
