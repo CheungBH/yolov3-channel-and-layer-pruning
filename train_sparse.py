@@ -185,7 +185,7 @@ def train():
                 p.requires_grad = False
             else:
                 p.requires_grad = True
-    else:
+    elif opt.type == 'tiny':
         #tiny
         for k, p in model.named_parameters():
             # if 'BatchNorm2d' in k and int(k.split('.')[1]) > 33: #open bn
@@ -277,7 +277,7 @@ def train():
         model.train()
         print(('\n' + '%10s' * 11) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'soft', 'rratio', 'targets', 'img_size','lr'))
         # Freeze backbone at epoch 0, unfreeze at epoch 1 (optional)
-        freeze_backbone = True
+        freeze_backbone = False
         if freeze_backbone and epoch < 2:
             for name, p in model.named_parameters():
                 if int(name.split('.')[1]) < cutoff:  # if layer < 75
@@ -351,14 +351,8 @@ def train():
             idx2mask = None
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
-
+            print([item.weight.requires_grad for item in list(model.modules()) if isinstance(item, torch.nn.BatchNorm2d)])
             BNOptimizer.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
-            # Compute gradient
-            if mixed_precision:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss.backward()
 
             # Accumulate gradient for x batches before optimizing
             if ni % accumulate == 0:
@@ -595,14 +589,14 @@ if __name__ == '__main__':
 
     tb_writer = None
     if not opt.evolve:  # Train normally
-        try:
-            train()  # train normally
-        except  :
-            with open('error.txt','a+') as f:
-                f.write(opt.expID)
-                f.write('\n')
-                f.write('----------------------------------------------\n')
-                traceback.print_exc(file=f)
+        # try:
+        train()  # train normally
+        # except  :
+        #     with open('error.txt','a+') as f:
+        #         f.write(opt.expID)
+        #         f.write('\n')
+        #         f.write('----------------------------------------------\n')
+        #         traceback.print_exc(file=f)
 
 
     else:  # Evolve hyperparameters (optional)

@@ -144,8 +144,8 @@ def train():
         cutoff = load_darknet_weights(model, weights)
         print('loaded weights from', weights, '\n')
 
-    if opt.freeze and opt.type in ['spp','normal']:
-        # spp , normal
+    if opt.freeze and opt.type in ['spp','original']:
+        # spp , original
         for k, p in model.named_parameters():
             # if 'BatchNorm2d' in k and int(k.split('.')[1]) > 33: #open bn
             if 'BatchNorm2d' in k:
