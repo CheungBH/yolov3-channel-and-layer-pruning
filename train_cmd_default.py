@@ -2,8 +2,13 @@
 
 cmds = [
 
-'python train.py --type spp --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize adam --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/fish/fish.data --expFolder fish	--expID 1134',
-
+'python train.py --type spp --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 13',
+'python train.py --type original --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 14',
+'python train.py --type tiny --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/yolov3-tiny.conv.15 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 15',
+'python train.py --type spp --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 16',
+'python train.py --type original --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 17',
+'python train.py --type tiny --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/yolov3-tiny.conv.15 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 18',
+'python train.py --type spp --activation leaky --batch-size 8 --freeze True --epochs 150 --LR 0.00025 --optimize adam --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 19',
 
 ]
 

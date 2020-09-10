@@ -38,7 +38,6 @@ def train():
     batch_size = opt.batch_size
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
     weights = opt.weights  # initial training weights
-    convert_weight = True
     config.hyp['lr0'] = opt.LR
     # i.e ./gray/spp/1(./opt.expFolder/opt.type/opt.expID)
     # result_dir = os.path.join((opt.expFolder+'_'+opt.type),opt.expID)
@@ -60,8 +59,7 @@ def train():
     if 'pw' not in opt.arc:  # remove BCELoss positive weights
         config.hyp['cls_pw'] = 1.
         config.hyp['obj_pw'] = 1.
-    early_stoping_giou = EarlyStopping(patience=config.patience,verbose=True)
-    early_stoping_obj = EarlyStopping(patience=config.patience, verbose=True)
+    early_stoping = EarlyStopping(patience=config.patience,verbose=True)
     # Initialize
     init_seeds()
     multi_scale = opt.multi_scale
@@ -379,15 +377,15 @@ def train():
         if epoch == config.warm_up:
             lr = opt.LR
         if epoch > config.warm_up:
-            early_stoping_giou(list(results)[-3],list(results)[-2])#valGiou
-            if early_stoping_giou.early_stop :
+            early_stoping(list(results)[-3],list(results)[-2])#valGiou
+            if early_stoping.early_stop :
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
                 if decay > opt.lr_decay_time:
                     stop = True
                 else:
                     decay_epoch.append(epoch)
-                    early_stoping_giou.reset(int(config.patience * patience_decay[decay]))
+                    early_stoping.reset(int(config.patience * patience_decay[decay]))
 
         # Save training results
         save = (not opt.nosave) or (final_epoch and not opt.evolve) or opt.prebias
@@ -404,7 +402,7 @@ def train():
 
             # Save last checkpoint
             torch.save(chkpt, last)
-            if convert_weight:
+            if config.convert_weight:
                 convert(cfg=cfg, weights=weight_dir + 'last.pt')
                 os.remove(weight_dir + 'last.pt')
 
@@ -414,14 +412,14 @@ def train():
             # Save best checkpoint
             if best_fitness == fitness:
                 torch.save(chkpt, best)
-                if convert_weight:
+                if config.convert_weight:
                     convert(cfg=cfg, weights=weight_dir + 'best.pt' )
                     os.remove(weight_dir + 'best.pt')
 
             # Save backup every 10 epochs (optional)
             if  epoch> config.epoch and epoch % opt.save_interval == 0:
                 torch.save(chkpt, weight_dir + 'backup%g.pt' % epoch)
-                if convert_weight:
+                if config.convert_weight:
                     convert(cfg=cfg, weights=weight_dir + 'backup%g.pt' % epoch)
                     os.remove(weight_dir + 'backup%g.pt' % epoch)
             # Delete checkpoint
