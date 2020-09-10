@@ -1,4 +1,7 @@
 *.jpg
+*.txt
+*.csv
+error.txt
 S.DS_Store
 debug*
 datasets/
