@@ -1029,8 +1029,6 @@ def draw_graph(epoch, train_loss_ls, val_loss_ls, prmf_ls, log_dir):
     Recall = [prmf_ls[i][1] for i in range(len(prmf_ls))]
     Map = [prmf_ls[i][2] for i in range(len(prmf_ls))]
     F1 = [prmf_ls[i][3] for i in range(len(prmf_ls))]
-    print(val_GIou)
-    print(epoch_ls)
     ln1, = plt.plot(epoch_ls, val_GIou, color='red', linewidth=3.0, linestyle='--')
     ln2, = plt.plot(epoch_ls, val_Obj, color='blue', linewidth=3.0, linestyle='-.')
     ln3, = plt.plot(epoch_ls, val_Cls, color='yellow', linewidth=3.0, linestyle='--')
