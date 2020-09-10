@@ -351,7 +351,7 @@ def train():
             idx2mask = None
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
-            print([item.weight.requires_grad for item in list(model.modules()) if isinstance(item, torch.nn.BatchNorm2d)])
+            # print([item.weight.requires_grad for item in list(model.modules()) if isinstance(item, torch.nn.BatchNorm2d)])
             BNOptimizer.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
 
             # Accumulate gradient for x batches before optimizing
