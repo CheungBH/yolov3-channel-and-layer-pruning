@@ -1,4 +1,5 @@
 import argparse
+import traceback
 import csv
 import torch.distributed as dist
 import torch.optim as optim
@@ -404,19 +405,25 @@ def train():
 
             # Save last checkpoint
             torch.save(chkpt, last)
+            if convert_weight:
+                convert(cfg=cfg, weights=weight_dir + 'last.pt')
+                os.remove(weight_dir + 'last.pt')
+
             if opt.bucket and not opt.prebias:
                 os.system('gsutil cp %s gs://%s' % (last, opt.bucket))  # upload to bucket
 
             # Save best checkpoint
             if best_fitness == fitness:
                 torch.save(chkpt, best)
+                if convert_weight:
+                    convert(cfg=cfg, weights=weight_dir + 'best.pt' )
+                    os.remove(weight_dir + 'best.pt')
 
             # Save backup every 10 epochs (optional)
-            if  epoch % opt.save_interval == 0:
+            if  epoch> config.epoch and epoch % opt.save_interval == 0:
                 torch.save(chkpt, weight_dir + 'backup%g.pt' % epoch)
                 if convert_weight:
                     convert(cfg=cfg, weights=weight_dir + 'backup%g.pt' % epoch)
-                    tmp_weights = weight_dir + 'backup%g.pt' % epoch
                     os.remove(weight_dir + 'backup%g.pt' % epoch)
             # Delete checkpoint
             del chkpt
@@ -516,8 +523,15 @@ if __name__ == '__main__':
 
     tb_writer = None
     if not opt.evolve:  # Train normally
-
+        # try:
         train()  # train normally
+        # except  :
+        #     with open('error.txt','a+') as f:
+        #         f.write(opt.expID)
+        #         f.write('\n')
+        #         f.write('----------------------------------------------\n')
+        #         traceback.print_exc(file=f)
+
 
     else:  # Evolve hyperparameters (optional)
         opt.notest = True  # only test final epoch
