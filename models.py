@@ -457,3 +457,6 @@ def attempt_download(weights):
                 os.system('rm ' + weights)  # remove partial downloads
 
         assert os.path.exists(weights), msg  # download missing weights from Google Drive
+if __name__ == '__main__':
+    convert(cfg='/media/hkuit164/My Passport/yolo_pruned/finetuned/0909_test-test1-best-SLIM-prune_0.93_keep_0.1/prune_0.93_keep_0.1.cfg',
+            weights='/media/hkuit164/My Passport/yolo_pruned/finetuned/0909_test-test1-best-SLIM-prune_0.93_keep_0.1/best.pt')

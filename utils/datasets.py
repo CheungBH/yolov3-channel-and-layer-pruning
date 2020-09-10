@@ -101,6 +101,14 @@ class LoadImages:  # for inference
         # Padded resize
         img = letterbox(img0, new_shape=self.img_size)[0]
 
+        rows, cols, channel = img.shape
+        affineShrinkTranslationRotation = cv2.getRotationMatrix2D((cols / 2, rows / 2), 180, 1)
+        img = cv2.warpAffine(img, affineShrinkTranslationRotation, (cols, rows),
+                             borderValue=125)
+        # cv2.imshow('11', img)
+        # cv2.waitKey(0)
+
+
         # Normalize RGB
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB
         img = np.ascontiguousarray(img, dtype=np.float16 if self.half else np.float32)  # uint8 to fp16/fp32

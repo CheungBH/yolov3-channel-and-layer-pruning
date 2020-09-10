@@ -64,9 +64,12 @@ def detect(save_txt=False, save_img=False):
         t = time.time()
 
         # Get detections
+
         img = torch.from_numpy(img).to(device)
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
+            # cv2.imshow('111',img*255)
+            # cv2.waitKey(0)
         pred, _ = model(img)
 
         if opt.half:
@@ -100,10 +103,15 @@ def detect(save_txt=False, save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
 
             print('%sDone. (%.3fs)' % (s, time.time() - t))
-
+            # cv2.imshow(p, im0)
+            # cv2.waitKey(0)
+            # im0 = im0[:,:,::-1]
+            # cv2.imshow(p, im0)
+            # cv2.waitKey
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
+                # cv2.waitKey(0)
 
             # Save results (image with detections)
             if save_img:

@@ -1,5 +1,5 @@
 import glob
-import os
+import os,sys
 import random
 import shutil
 from pathlib import Path
@@ -13,7 +13,7 @@ import torch.nn as nn
 from tqdm import tqdm
 import time
 from . import torch_utils  # , google_utils
-
+print(sys.executable)
 matplotlib.rc('font', **{'size': 11})
 
 # Set printoptions
@@ -150,7 +150,8 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
     """
 
     # Sort by objectness
-    i = np.argsort(-conf)
+
+    i = np.argsort(-conf)# sort de and return index
     tp, conf, pred_cls = tp[i], conf[i], pred_cls[i]
 
     # Find unique classes
@@ -158,6 +159,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
 
     # Create Precision-Recall curve and compute AP for each class
     ap, p, r = [], [], []
+    fp = []
     for c in unique_classes:
         i = pred_cls == c
         n_gt = (target_cls == c).sum()  # Number of ground truth objects
@@ -175,7 +177,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
             tpc = (tp[i]).cumsum()
 
             # Recall
-            recall = tpc / (n_gt + 1e-16)  # recall curve
+            recall = tpc / (n_gt + 1e-16)  # recall curve in case n_gt = 0
             r.append(recall[-1])
 
             # Precision
@@ -184,15 +186,26 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
 
             # AP from recall-precision curve
             ap.append(compute_ap(recall, precision))
+            FPR = fpc/ (32-n_p)
 
-            # Plot
-            # fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-            # ax.plot(np.concatenate(([0.], recall)), np.concatenate(([0.], precision)))
-            # ax.set_xlabel('YOLOv3-SPP')
-            # ax.set_xlabel('Recall')
-            # ax.set_ylabel('Precision')
-            # ax.set_xlim(0, 1)
+            # Plot for testing
+            # fig, ax = plt.subplots(1, 2)
+            # ax[0].plot(np.concatenate(([0.], recall,[1.])), np.concatenate(([0.], precision,[0.])))
+            # ax[1].plot(np.concatenate(([0.], FPR)), np.concatenate(([0.], recall)))
+            # ax[0].set_title('PR')
+            # ax[0].set_xlabel('Recall')
+            # ax[0].set_ylabel('Precision')
+            # ax[0].set_xlim(0, 1)
+            # ax[1].set_title('ROC')
+            # ax[1].set_xlabel('FPR')
+            # ax[1].set_ylabel('Recall')
+            # ax[1].set_xlim(0, 1)
             # fig.tight_layout()
+            res = 0
+            for i in range(1,len(recall)):
+                res += (precision[i]+precision[i-1])*(recall[i]-recall[i-1])/2.0
+            print('PR_area:',res)
+            # plt.show()
             # fig.savefig('PR_curve.png', dpi=300)
 
     # Compute F1 score (harmonic mean of precision and recall)
@@ -795,7 +808,7 @@ def plot_output(imgs, targets, writer, paths=None, fname='tmp.jpg'):
     plt.close()
     try:
         writer.add_image(fname, cv2.imread(fname)[:, :, ::-1], dataformats='HWC')
-    except TypeError:
+    except :
         print('Nonetype object is not subscriptable')
 
 

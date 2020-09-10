@@ -2,7 +2,7 @@ import argparse
 import json
 
 from torch.utils.data import DataLoader
-
+import csv
 from models import *
 from utils.datasets import *
 from utils.utils import *
@@ -19,7 +19,8 @@ def test(cfg,
          save_json=False,
          model=None,
          writer=None,
-         write_txt = None):
+         write_csv = False,
+         id=0):
     
     # Initialize/load model and set device
 
@@ -62,14 +63,6 @@ def test(cfg,
     model.eval()
     coco91class = coco80_to_coco91_class()
     s = ('%20s' + '%10s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP', 'F1')
-    # if write_txt:
-    #     with open('./black-results.txt', "a+") as f:
-    #         f.write("\n")
-    #         f.write(weights.split('/')[-2:][0] + '_' + weights.split('/')[-1])
-    #         f.write("\n")
-    #         f.write("\n")
-    #         f.write(s)
-    #         f.write("\n")
     p, r, f1, mp, mr, map, mf1 = 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3)
     write_tb = True
@@ -111,9 +104,6 @@ def test(cfg,
                     stats.append(([], torch.Tensor(), torch.Tensor(), tcls))
                 continue
 
-            # Append to text file
-            # with open('test.txt', 'a') as file:
-            #    [file.write('%11.5g' * 7 % tuple(x) + '\n') for x in pred]
 
             # Append to pycocotools JSON dictionary
             if save_json:
@@ -175,16 +165,21 @@ def test(cfg,
     else:
         nt = torch.zeros(1)
 
+    #write csv
+    exist = os.path.exists('result/test.csv')
+    if write_csv:
+        with open('result/test.csv','a+',newline='') as f:
+            f_csv = csv.writer(f)
+            if not exist:
+                title = ['ID','Images', 'Targets', 'P', 'R', 'mAP', 'F1']
+                f_csv.writerow(title)
+            info_str=[id,seen, nt.sum(), mp, mr, map, mf1]
+            f_csv.writerow(info_str)
+
+
     # Print results
     pf = '%20s' + '%10.3g' * 6  # print format
     print(pf % ('all', seen, nt.sum(), mp, mr, map, mf1))
-    # if write_txt:
-    #     with open('./black-results.txt', "a+") as f:
-    #         f.write("\n")
-    #         f.write(pf % ('all', seen, nt.sum(), mp, mr, map, mf1))
-    #         f.write("\n")
-            # f.write("\n")
-            # f.write(pf % (names[c], seen, nt[c], p[i], r[i], ap[i], f1[i]))
     # Print results per class
     if verbose and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
