@@ -4,6 +4,7 @@ warm_up = 6
 patience_decay = {1:0.8,2:0.5,3:0}
 device = "cuda:0"
 computer = 'sean'
+epoch = 20
 weight_dest = "grayE-4"
 sparse_param = []
 # Hyperparameters (j-series, 50.5 mAP yolov3-320) -d by @ktian08 https://github.com/ultralytics/yolov3/issues/310

@@ -1,3 +1,4 @@
+*.jpg
 S.DS_Store
 debug*
 datasets/
