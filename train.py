@@ -154,7 +154,7 @@ def train():
                 p.requires_grad = False
             else:
                 p.requires_grad = True
-    else:
+    elif opt.type == 'tiny':
         #tiny
         for k, p in model.named_parameters():
             # if 'BatchNorm2d' in k and int(k.split('.')[1]) > 33: #open bn
