@@ -4,9 +4,9 @@ from train_result.config import task_folder, batch_folder
 with open("{}.txt".format(os.path.join(task_folder, batch_folder, batch_folder)), "r") as f:
     lines = [line for line in f.readlines() if line != "\n"]
 
-train_begin, train_end = 231,0
-CUDA = 3
-target_cmds = lines[train_begin-1: ]
+train_begin, train_end = 0,0
+CUDA = ''
+target_cmds = lines[ : ]
 # target_cmds = [cmd for cmd in target_cmds if cmd != ""]
 
 if CUDA != -1:
