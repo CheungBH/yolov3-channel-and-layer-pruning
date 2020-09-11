@@ -35,9 +35,11 @@ test/.coverage
 */**/*.dylib*
 test/data/legacy_serialized.pt
 *~
+__pycache__/
 .idea
 models
 yolo
+trained_weights/
 SPPE
 log
 Video

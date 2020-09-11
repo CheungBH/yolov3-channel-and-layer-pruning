@@ -1,5 +1,5 @@
 #-*-coding:utf-8-*-
-patience = 7
+patience = 9
 warm_up = 6
 patience_decay = {1:0.8,2:0.5,3:0}
 device = "cuda:0"

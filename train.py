@@ -417,6 +417,7 @@ def train():
                     os.remove(weight_dir + 'best.pt')
 
             # Save backup every 10 epochs (optional)
+
             if  epoch> config.epoch and epoch % opt.save_interval == 0:
                 torch.save(chkpt, weight_dir + 'backup%g.pt' % epoch)
                 if config.convert_weight:
