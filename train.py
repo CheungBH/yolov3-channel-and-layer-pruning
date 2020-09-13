@@ -481,7 +481,7 @@ if __name__ == '__main__':
     parser.add_argument('--t_cfg', type=str, default='', help='teacher model cfg file path for knowledge distillation')
     parser.add_argument('--data', type=str, default='data/coco.data', help='*.data file path')
     parser.add_argument('--test_data', type=str, default='data/ceiling.data', help='*.data file path')
-    parser.add_argument('--multi-scale', action='store_true', default=True,help='adjust (67% - 150%) img_size every 10 batches')
+    parser.add_argument('--multi-scale', action='store_true',help='adjust (67% - 150%) img_size every 10 batches')
     parser.add_argument('--img_size', type=int, default=416, help='inference size (pixels)')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
     parser.add_argument('--resume', action='store_true', help='resume training from last.pt')
