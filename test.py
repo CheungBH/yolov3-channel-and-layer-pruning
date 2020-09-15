@@ -1,6 +1,6 @@
 import argparse
 import json
-
+import pandas as pd
 from torch.utils.data import DataLoader
 import csv
 from models import *
@@ -18,9 +18,7 @@ def test(cfg,
          nms_thres=0.5,
          save_json=False,
          model=None,
-         writer=None,
-         write_csv = False,
-         id=0):
+         writer=None,):
     
     # Initialize/load model and set device
 
@@ -165,16 +163,19 @@ def test(cfg,
     else:
         nt = torch.zeros(1)
 
-    #write csv
-    exist = os.path.exists('result/test.csv')
-    if write_csv:
-        with open('result/test.csv','a+',newline='') as f:
+    if opt.write_csv:
+        df = pd.read_csv(opt.csv_path)
+        df_head = df[0:1]
+        exist = os.path.exists('test_result.csv')
+        with open('test_result.csv','a+') as f:
             f_csv = csv.writer(f)
             if not exist:
-                title = ['ID','Images', 'Targets', 'P', 'R', 'mAP', 'F1']
+                title = list(df_head)[0:18]
+                title.extend(['test_data','P', 'R', 'mAP', 'F1'])
                 f_csv.writerow(title)
-            info_str=[id,seen, nt.sum(), mp, mr, map, mf1]
-            f_csv.writerow(info_str)
+            info_list = np.array(df.loc[df['ID'] == opt.id]).tolist()[0][0:18]
+            info_list.extend([opt.data.split('/')[-1],mp, mr, map, mf1])
+            f_csv.writerow(info_list)
 
 
     # Print results
@@ -227,6 +228,9 @@ if __name__ == '__main__':
     parser.add_argument('--nms-thres', type=float, default=0.5, help='iou threshold for non-maximum suppression')
     parser.add_argument('--save-json', action='store_true', help='save a cocoapi-compatible JSON results file')
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1) or cpu')
+    parser.add_argument('--id', type=int, default=000, help='inference size (pixels)')
+    parser.add_argument('--csv_path', type=str, default='', help='path to weights file')
+    parser.add_argument('--write_csv', action='store_true', help='save test csv file')
     opt = parser.parse_args()
     print(opt)
 

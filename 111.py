@@ -62,28 +62,52 @@
 
 import pandas as pd
 import os
+import argparse
 from models import *
+import traceback
 from test import test
-path = 'result/gray/gray_result_sean.csv'
+import csv
+path = '/media/hkuit164/WD20EJRX/mysql/rgb/rgb_result_sean.csv'
 df = pd.read_csv(path)
-type= df[df['ID']==2][:]['tpye']
-activate= df[df['ID']==2][:]['activate']
-img_size = df[df['ID']==2][:]['img_size']
-path=''
+weight_folder='weights/rgb'
 # name is id
-for name in os.listdir(path):
-    weight_path = os.path.join(path,name)
-    cfg = ''
-
-    if not os.path.exists(os.path.join(weight_path,'best.weight')):
-        if  not os.path.exists(os.path.join(weight_path,'best.pt')):
-            print('error')
+try:
+    for name in os.listdir(weight_folder):
+        type = df[df['ID'] == int(name)][:]['tpye']
+        activate = df[df['ID'] == int(name)][:]['activation']
+        img_size = df[df['ID'] == int(name)][:]['img_size']
+        # data = df[df['ID'] == int(name)][:]['data']
+        data_folder = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/test/'
+        weight_path = os.path.join(weight_folder,name)
+        cfg = os.path.join('cfg','yolov3-'+list(type)[0]+'-1cls-'+list(activate)[0]+'.cfg')
+        result=[]
+        weight_name = os.path.join(weight_path, 'best.weights')
+        if not os.path.exists(os.path.join(weight_path,'best.weights')):
+            if not os.path.exists(os.path.join(weight_path,'best.pt')):
+                print('Not found best.pt')
+            else:
+                convert(cfg=cfg, weights=os.path.join(weight_path,'best.pt'))
+                #for data
+                for i in ['far','mul','single_front','single_side','all']:
+                    data = data_folder+i+'/'+i+'.data'
+                    cmd = 'python test.py --cfg {} --data {} ' \
+                      '--weights {} --batch-size 8 --img-size {} ' \
+                      '--conf-thres 0.5 --id {} --csv_path {} --write_csv'.format(cfg, data, weight_name, list(img_size)[0], int(name),path)
+                    # print(cmd)
+                    os.system(cmd)
         else:
-            convert(cfg=cfg, weights=os.path.exists(os.path.join(weight_path,'best.pt')))
-            test(id=name,cfg=cfg,weights=os.path.exists(os.path.join(weight_path,'best.pt')),img_size=img_size)
-    else:
-        test(id=name,cfg=cfg,weights=os.path.exists(os.path.join(weight_path,'best.pt')),img_size=img_size)
+            for i in ['far', 'mul', 'single_front', 'single_side', 'all']:
+                data = data_folder + i + '/' + i + '.data'
+                cmd = 'python test.py --cfg {} --data {} ' \
+                  '--weights {} --batch-size 8 --img-size {} ' \
+                  '--conf-thres 0.5 --id {} --csv_path {} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name), path)
+                # print(cmd)
+                os.system(cmd)
+except:
+    with open('test_error.txt', 'a+') as f:
+        f.write(name)
+        f.write('\n')
+        f.write('----------------------------------------------\n')
+        traceback.print_exc(file=f)
 
 
-
-print(df[df['ID']==2][:])
