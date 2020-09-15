@@ -71,8 +71,8 @@ path = '/media/hkuit164/WD20EJRX/mysql/rgb/rgb_result_sean.csv'
 df = pd.read_csv(path)
 weight_folder='weights/rgb'
 # name is id
-try:
-    for name in os.listdir(weight_folder):
+for name in os.listdir(weight_folder):
+    try:
         type = df[df['ID'] == int(name)][:]['tpye']
         activate = df[df['ID'] == int(name)][:]['activation']
         img_size = df[df['ID'] == int(name)][:]['img_size']
@@ -90,24 +90,23 @@ try:
                 #for data
                 for i in ['far','mul','single_front','single_side','all']:
                     data = data_folder+i+'/'+i+'.data'
-                    cmd = 'python test.py --cfg {} --data {} ' \
-                      '--weights {} --batch-size 8 --img-size {} ' \
-                      '--conf-thres 0.5 --id {} --csv_path {} --write_csv'.format(cfg, data, weight_name, list(img_size)[0], int(name),path)
-                    # print(cmd)
+                    cmd = 'python test.py --cfg {0} --data {1} ' \
+                          '--weights {2} --batch-size 8 --img-size {3} ' \
+                          '--conf-thres 0.5 --id {4} --csv_path {5} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name),path)
                     os.system(cmd)
         else:
             for i in ['far', 'mul', 'single_front', 'single_side', 'all']:
                 data = data_folder + i + '/' + i + '.data'
-                cmd = 'python test.py --cfg {} --data {} ' \
-                  '--weights {} --batch-size 8 --img-size {} ' \
-                  '--conf-thres 0.5 --id {} --csv_path {} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name), path)
+                cmd = 'python test.py --cfg {0} --data {1} ' \
+                  '--weights {2} --batch-size 8 --img-size {3} ' \
+                  '--conf-thres 0.5 --id {4} --csv_path {5} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name), path)
                 # print(cmd)
                 os.system(cmd)
-except:
-    with open('test_error.txt', 'a+') as f:
-        f.write(name)
-        f.write('\n')
-        f.write('----------------------------------------------\n')
-        traceback.print_exc(file=f)
+    except:
+        with open('test_error.txt', 'a+') as f:
+            f.write(name)
+            f.write('\n')
+            f.write('----------------------------------------------\n')
+            traceback.print_exc(file=f)
 
 
