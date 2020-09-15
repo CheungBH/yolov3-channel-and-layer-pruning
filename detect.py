@@ -13,9 +13,9 @@ def detect(save_txt=False, save_img=False):
 
     # Initialize
     device = torch_utils.select_device(device='cpu' if ONNX_EXPORT else opt.device)
-    if os.path.exists(out):
-        shutil.rmtree(out)  # delete output folder
-    os.makedirs(out)  # make new output folder
+    # if os.path.exists(out):
+    #     shutil.rmtree(out)  # delete output folder
+    # os.makedirs(out)  # make new output folder
 
     # Initialize model
     model = Darknet(opt.cfg, img_size)
@@ -68,8 +68,7 @@ def detect(save_txt=False, save_img=False):
         img = torch.from_numpy(img).to(device)
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
-            # cv2.imshow('111',img*255)
-            # cv2.waitKey(0)
+
         pred, _ = model(img)
 
         if opt.half:
@@ -103,11 +102,6 @@ def detect(save_txt=False, save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
 
             print('%sDone. (%.3fs)' % (s, time.time() - t))
-            # cv2.imshow(p, im0)
-            # cv2.waitKey(0)
-            # im0 = im0[:,:,::-1]
-            # cv2.imshow(p, im0)
-            # cv2.waitKey
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
@@ -145,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument('--source', type=str, default='data/samples', help='source')  # input file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=416, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.3, help='object confidence threshold')
+    parser.add_argument('--conf-thres', type=float, default=0.5, help='object confidence threshold')
     parser.add_argument('--nms-thres', type=float, default=0.5, help='iou threshold for non-maximum suppression')
     parser.add_argument('--fourcc', type=str, default='mp4v', help='output video codec (verify ffmpeg support)')
     parser.add_argument('--half', action='store_true', help='half precision FP16 inference')
