@@ -67,9 +67,9 @@ from models import *
 import traceback
 from test import test
 import csv
-path = '/media/hkuit164/WD20EJRX/mysql/rgb/rgb_result_sean.csv'
+path = '/media/hkuit164/WD20EJRX/mysql/gray_result_sean.csv'
 df = pd.read_csv(path)
-weight_folder='weights/rgb'
+weight_folder='/media/hkuit164/MB155_4/weight/gray'
 # name is id
 for name in os.listdir(weight_folder):
     try:
