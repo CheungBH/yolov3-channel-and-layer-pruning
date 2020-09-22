@@ -67,9 +67,10 @@ from models import *
 import traceback
 from test import test
 import csv
-path = '/media/hkuit164/WD20EJRX/mysql/gray_result_sean.csv'
+path = '/media/hkuit164/MB155_3/result/gray_warm/gray_warm_result_sean.csv'
+weight_folder='/media/hkuit164/MB155_4/gray_warm'
+data_folder = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/test/'
 df = pd.read_csv(path)
-weight_folder='/media/hkuit164/MB155_4/weight/gray'
 # name is id
 for name in os.listdir(weight_folder):
     try:
@@ -77,7 +78,6 @@ for name in os.listdir(weight_folder):
         activate = df[df['ID'] == int(name)][:]['activation']
         img_size = df[df['ID'] == int(name)][:]['img_size']
         # data = df[df['ID'] == int(name)][:]['data']
-        data_folder = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/test/'
         weight_path = os.path.join(weight_folder,name)
         cfg = os.path.join('cfg','yolov3-'+list(type)[0]+'-1cls-'+list(activate)[0]+'.cfg')
         result=[]
