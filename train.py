@@ -503,7 +503,7 @@ if __name__ == '__main__':
     parser.add_argument('--sparsity-regularization', '-sr', dest='sr', action='store_true', help='train with channel sparsity regularization')
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
-    parser.add_argument('--freeze',action='store_true',default=False,  help='freeze layers ')
+    parser.add_argument('--freeze',action='store_true',  help='freeze layers ')
     # parser.add_argument('--freeze_percent', type=int, default=0.5)
     parser.add_argument('--expID', type=str, default='0', help='model number')
     parser.add_argument('--LR', type=float,default=0.001, help='learning rate')
