@@ -521,14 +521,16 @@ if __name__ == '__main__':
 
     tb_writer = None
     if not opt.evolve:  # Train normally
-        # try:
-        train()  # train normally
-        # except  :
-        #     with open('error.txt','a+') as f:
-        #         f.write(opt.expID)
-        #         f.write('\n')
-        #         f.write('----------------------------------------------\n')
-        #         traceback.print_exc(file=f)
+        try:
+            train()  # train normally
+        except  :
+            if os.path.exists('error.txt'):
+                os.remove('error.txt')
+            with open('error.txt','a+') as f:
+                f.write(opt.expID)
+                f.write('\n')
+                f.write('----------------------------------------------\n')
+                traceback.print_exc(file=f)
 
 
     else:  # Evolve hyperparameters (optional)
