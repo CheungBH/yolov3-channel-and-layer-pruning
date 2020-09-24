@@ -214,7 +214,7 @@ def test(cfg,
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return ('all', seen, nt.sum(), mp, mr, map, mf1),(mp, mr, map, mf1, *(loss / len(dataloader)).tolist()), maps
+    return (mp, mr, map, mf1, *(loss / len(dataloader)).tolist()), maps
 
 
 if __name__ == '__main__':

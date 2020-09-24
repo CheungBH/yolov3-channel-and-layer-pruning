@@ -1,38 +1,30 @@
-folders = [
-    # "prune_result/gray_1_225_0.01/all_prune/prune_0.8_keep_0.01_10_shortcut",
-    # "prune_result/gray_1_225_0.01/all_prune/prune_0.85_keep_0.01_10_shortcut",
-    # "prune_result/gray_1_225_0.01/layer_prune/prune_8_shortcut",
-    # "prune_result/gray_1_225_0.01/layer_prune/prune_12_shortcut",
-    # "prune_result/gray_1_225_0.01/layer_prune/prune_15_shortcut",
-    # "prune_result/gray_1_225_0.01/slim_prune/prune_0.85_keep_0.01",
-    # "prune_result/gray_1_225_0.01/slim_prune/prune_0.88_keep_0.01",
-    # "prune_result/gray_2_0.2/all_prune/prune_0.85_keep_0.01_10_shortcut",
-    # "prune_result/gray_2_0.2/layer_prune/prune_15_shortcut",
-    # "prune_result/gray_2_0.2/slim_prune/prune_0.85_keep_0.01"
-    # "prune_result/gray_1_225_0.01/layer_prune/prune_20_shortcut",
-    # "prune_result/gray_1_225_0.01/slim_prune/prune_0.93_keep_0.1",
-    # "prune_result/gray_1_225_0.01/all_prune/prune_0.88_keep_0.01_16_shortcut",
-    # "prune_result/gray_1_225_0.01/all_prune/prune_0.9_keep_0.1_15_shortcut"
-    "prune_result/gray_1_225_0.01/all_prune/prune_0.95_keep_0.01_10_shortcut",
-    "prune_result/gray_1_225_0.01/all_prune/prune_0.88_keep_0.01_20_shortcut",
-]
-
+from prune.config import data, batch_size, epoch, ms
+from prune.config import finetune_folders as folders
+import shutil
 import os
-# cmds = ["python train.py --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights {0}/{1}.weights --epochs 100 --batch-size 32".format(folder, folder.split("/")[-1]) for folder in folders]
 
 cmds = []
 for folder in folders:
+    cfg, model = "", ""
     path_ls = folder.split("/")
-    wdir = path_ls[1] + "_" + path_ls[2] + "_" + path_ls[3] + "_distilled"
-    cmds.append("python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights {0}/{1}.weights --epochs 100 --batch-size 32 --t_cfg cfg/yolov3-1cls.cfg --t_weights weights/gray_origin/best.pt".format(folder, folder.split("/")[-1], wdir))
-    wdir = path_ls[1] + "_" + path_ls[2] + "_" + path_ls[3]
-    cmds.append(
-        "python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights {0}/{1}.weights --epochs 100 --batch-size 32".format(
-            folder, folder.split("/")[-1], wdir))
+    wdir_tmp = path_ls[1] + "/" + path_ls[2]
 
-    # cmds.append("python train.py --wdir finetune/{2} --cfg {0}/{1}.cfg --data data/swim_gray/gray.data --weights finetune/gray_1_225_0.01_slim_prune_prune_0.88_keep_0.01/last.pt --epochs 100 --batch-size 32".format(folder, folder.split("/")[-1], wdir))
-
+    files = [os.path.join(folder, f) for f in os.listdir(folder)]
+    for file in files:
+        if "cfg" in file:
+            cfg = file
+        elif ".pt" in file or ".weight" in file:
+            model = file
+        else:
+            continue
+    wdir = os.path.join(wdir_tmp,model.split('/')[-2])
+    # shutil.copy(cfg, os.path.join("distillation", wdir))
+    assert cfg != "" and model != "", "Missing file in {}! (cfg or weight missed)".format(folder)
+    cmds.append("python train_finetune.py --wdir finetune/{} --cfg {} --weights {} --data {} --epochs {} --batch-size {} "
+                "--multi-scale {}".format(wdir, cfg, model, data, epoch, batch_size, ms))
 
 for cmd in cmds:
+    cmd = cmd.replace("--multi-scale False", "")
+    cmd = cmd.replace("--multi-scale True", "--multi-scale")
     os.system(cmd)
     # print(cmd)

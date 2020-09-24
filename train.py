@@ -317,7 +317,7 @@ def train():
             # Calculate mAP (always test final epoch, skip first 10 if opt.nosave)
             if not (opt.notest or (opt.nosave and epoch < 10)) or final_epoch:
                 with torch.no_grad():
-                    r,results, maps = test.test(cfg,
+                    results, maps = test.test(cfg,
                                               data,
                                               batch_size=batch_size,
                                               img_size=opt.img_size,
