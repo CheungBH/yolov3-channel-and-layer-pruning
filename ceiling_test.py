@@ -6,7 +6,7 @@ import traceback
 from test import test
 import csv
 path = '/media/hkuit164/MB155_3/result/ceiling/ceiling_result_sean.csv'
-weight_folder='/media/hkuit164/MB155_3/ceiling'
+weight_folder='/media/hkuit164/MB155_4/ceiling'
 data_folder = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/test/'
 df = pd.read_csv(path)
 # name is id
@@ -40,6 +40,8 @@ for name in os.listdir(weight_folder):
             # print(cmd)
             os.system(cmd)
     except:
+        if os.path.exists('test_error.txt'):
+            os.remove('test_error.txt')
         with open('test_error.txt', 'a+') as f:
             f.write(name)
             f.write('\n')

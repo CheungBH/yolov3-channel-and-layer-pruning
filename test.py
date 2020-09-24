@@ -17,6 +17,7 @@ def test(cfg,
          conf_thres=0.001,
          nms_thres=0.5,
          save_json=False,
+         write_csv = False,
          model=None,
          writer=None,):
     
@@ -163,7 +164,7 @@ def test(cfg,
     else:
         nt = torch.zeros(1)
 
-    if opt.write_csv:
+    if write_csv:
         df = pd.read_csv(opt.csv_path)
         df_head = df[0:1]
         exist = os.path.exists('test_result.csv')
@@ -243,4 +244,5 @@ if __name__ == '__main__':
              opt.iou_thres,
              opt.conf_thres,
              opt.nms_thres,
-             opt.save_json)
+             opt.save_json,
+             opt.write_csv)

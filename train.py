@@ -513,7 +513,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', default=1, type=int,help='interval')
     parser.add_argument('--optimize', type=str, default='sgd', help='optimizer(adam,sgd)')
     parser.add_argument('--lr_decay_time', type=int, default=2, help='lr decay time')
-
+    parser.add_argument('--write_csv', action='store_true', help='use adam optimizer')
     opt = parser.parse_args()
 
     print(opt)
@@ -521,14 +521,14 @@ if __name__ == '__main__':
 
     tb_writer = None
     if not opt.evolve:  # Train normally
-        try:
-            train()  # train normally
-        except  :
-            with open('error.txt','a+') as f:
-                f.write(opt.expID)
-                f.write('\n')
-                f.write('----------------------------------------------\n')
-                traceback.print_exc(file=f)
+        # try:
+        train()  # train normally
+        # except  :
+        #     with open('error.txt','a+') as f:
+        #         f.write(opt.expID)
+        #         f.write('\n')
+        #         f.write('----------------------------------------------\n')
+        #         traceback.print_exc(file=f)
 
 
     else:  # Evolve hyperparameters (optional)
