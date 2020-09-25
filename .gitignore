@@ -58,5 +58,5 @@ Dockerfile
 *.log
 result
 tensorboard
-
+train_result/demo_folder/gray_warm/
 
