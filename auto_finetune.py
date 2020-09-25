@@ -7,7 +7,7 @@ cmds = []
 for folder in folders:
     cfg, model = "", ""
     path_ls = folder.split("/")
-    wdir_tmp = path_ls[1] + "/" + path_ls[2]
+    wdir = path_ls[1] + "/" + path_ls[2]
 
     files = [os.path.join(folder, f) for f in os.listdir(folder)]
     for file in files:
@@ -17,7 +17,7 @@ for folder in folders:
             model = file
         else:
             continue
-    wdir = os.path.join(wdir_tmp,model.split('/')[-2])
+    # wdir = os.path.join(wdir_tmp,model.split('/')[-2])
     # shutil.copy(cfg, os.path.join("distillation", wdir))
     assert cfg != "" and model != "", "Missing file in {}! (cfg or weight missed)".format(folder)
     cmds.append("python train_finetune.py --wdir finetune/{} --cfg {} --weights {} --data {} --epochs {} --batch-size {} "

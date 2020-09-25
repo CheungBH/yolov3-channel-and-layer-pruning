@@ -2,7 +2,7 @@ import os
 models = {
     # "sparse_result/0909_test/test1/backup170.pt": "cfg/yolov3-1cls.cfg",
     # "weights/sparse_result/gray26/3E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse_result/gray26/5E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
+"weights/sparse/gray26_s5E-3/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
 # "sparse_result/0920/gray26_s2E-3/last.pt": "cfg/yolov3-1cls.cfg",
 # "sparse_result/0920/gray26_s3E-3/last.pt": "cfg/yolov3-1cls.cfg",
 # "sparse_result/0920/gray26_s4E-3/last.pt": "cfg/yolov3-1cls.cfg",
@@ -31,16 +31,16 @@ finetune_folders = [
     # "prune_result/0909_test/test1-best/ALL-prune_0.95_keep_0.01_10_shortcut",
     # os.path.join('prune_result/0909_test/test1-best',i)  for i in os.listdir('./prune_result/0909_test/test1-best')
     # if os.path.isdir(os.path.join('prune_result/0909_test/test1-best',i))
-os.path.join('prune_result/0924_test/gray26-last', i)
-for i in os.listdir('prune_result/0924_test/gray26-last')
-if os.path.isdir(os.path.join('prune_result/0924_test/gray26-last', i))
+os.path.join('prune_result/gray26_s5E-3-last', i)
+for i in os.listdir('prune_result/gray26_s5E-3-last')
+if os.path.isdir(os.path.join('prune_result/gray26_s5E-3-last', i))
     # "prune_result/0909_test/test1-backup170-layer_prune-prune_12_shortcut",
     # "prune_result/0909_test/test1-backup170-ordinary_prune-prune_0.85",
     # "prune_result/0909_test/test1-backup170-shortcut_prune-prune_0.9",
 ]
 # print(finetune_folders)
 batch_size = 16
-epoch = 100
+epoch = 1
 ms = True
 
 # (Distillation)

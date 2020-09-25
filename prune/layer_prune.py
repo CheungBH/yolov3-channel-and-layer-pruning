@@ -71,7 +71,7 @@ if __name__ == '__main__':
     else:
         raise ValueError("Wrong model name")
 
-    dest_folder = os.path.join("prune_result", opt.weights.split("/")[1], "{}-{}/LAYER-{}".
+    dest_folder = os.path.join("prune_result", "{}-{}/LAYER-{}".
                                format(opt.weights.split("/")[2], model_name, folder_str))
     os.makedirs(dest_folder, exist_ok=True)
     prune_res = open(os.path.join(dest_folder, "prune_log.txt"), "a+")
