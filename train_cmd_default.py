@@ -6,7 +6,7 @@ cmds = [
     # "python train.py --wdir gray26_sE-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.001 --prune 1",
     # "python train.py --wdir gray26_s2E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.002 --prune 1",
     # "python train.py --wdir gray26_s3E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.003 --prune 1",
-    "python train_finetune.py --wdir gray26_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 2 -sr --s 0.0004 --prune 1",
+    "python train_sparse.py --wdir gray26_s5E-3 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 5 -sr --s 0.005 --prune 1",
     # "python train.py --wdir gray26_s5E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.005 --prune 1",
 ]
 
