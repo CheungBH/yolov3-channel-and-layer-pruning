@@ -3,11 +3,11 @@
 cmds = [
 
 
-'python train.py --type spp --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 199',
-'python train.py --type original --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 17',
-'python train.py --type tiny --activation swish --batch-size 4 --freeze False --epochs 150 --LR 0.00025 --optimize sgd --weights weights/yolov3-tiny.conv.15 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 18',
-'python train.py --type spp --activation leaky --batch-size 8 --freeze True --epochs 150 --LR 0.00025 --optimize adam --weights weights/darknet53.conv.74 --save_interval 10 --multi-scale True --img_size 416 --rect False --data data/gray/gray.data --expFolder gray	--expID 19',
-
+    # "python train.py --wdir gray26_sE-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.001 --prune 1",
+    # "python train.py --wdir gray26_s2E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.002 --prune 1",
+    # "python train.py --wdir gray26_s3E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.003 --prune 1",
+    "python train_finetune.py --wdir gray26_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 2 -sr --s 0.0004 --prune 1",
+    # "python train.py --wdir gray26_s5E-3 --cfg cfg/yolov3-1cls.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 4 --epochs 100 -sr --s 0.005 --prune 1",
 ]
 
 def check_name(cmd):
