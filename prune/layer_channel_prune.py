@@ -364,7 +364,7 @@ if __name__ == '__main__':
         print(AsciiTable(metric_table).table)
         print(AsciiTable(metric_table).table, file=open(os.path.join(dest_folder, "metric.txt"), "w"))
         #save csv file
-        csv_path = os.path.join("prune_result", opt.weights.split("/")[1], "{}-{}".
+        csv_path = os.path.join("prune_result", "{}-{}".
                                format(opt.weights.split("/")[2], model_name))
         exist = os.path.exists(os.path.join(csv_path, 'prune.csv'))
         with open(os.path.join(csv_path, 'prune.csv'), 'a+') as f:

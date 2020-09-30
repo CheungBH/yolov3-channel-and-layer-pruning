@@ -16,7 +16,7 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -558,7 +558,7 @@ def train():
         # save csv file
     if write_csv:
 
-        csv_path = os.path.join("prune_result", opt.weights.split("/")[1], opt.weights.split("/")[2])
+        csv_path = os.path.join("prune_result", opt.weights.split("/")[1])
         exist = os.path.exists(os.path.join(csv_path, 'prune.csv'))
         model_name = opt.weights.split('/')[-2]+'_finetune'
         with open(os.path.join(csv_path, 'prune.csv'), 'a+') as f:

@@ -20,7 +20,7 @@ for folder in folders:
     # wdir = os.path.join(wdir_tmp,model.split('/')[-2])
     # shutil.copy(cfg, os.path.join("distillation", wdir))
     assert cfg != "" and model != "", "Missing file in {}! (cfg or weight missed)".format(folder)
-    cmds.append("python train_finetune.py --wdir finetune/{} --cfg {} --weights {} --data {} --epochs {} --batch-size {} "
+    cmds.append("CUDA_VISIBLE_DEVICES=3 python train_finetune.py --wdir finetune/{} --cfg {} --weights {} --data {} --epochs {} --batch-size {} "
                 "--multi-scale {}".format(wdir, cfg, model, data, epoch, batch_size, ms))
 
 for cmd in cmds:
