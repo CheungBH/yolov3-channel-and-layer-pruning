@@ -10,6 +10,7 @@ from models import *
 from utils.datasets import *
 from utils.utils import *
 from utils.prune_utils import *
+from utils.pytorchtools import EarlyStopping
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
@@ -118,9 +119,15 @@ def train():
         hyp['cls_pw'] = 1.
         hyp['obj_pw'] = 1.
 
+    early_stoping = EarlyStopping(patience=config.patience,verbose=True)
     # Initialize
     init_seeds()
     multi_scale = opt.multi_scale
+    lr = opt.LR
+    decay = 0
+    decay_epoch = []
+    patience_decay = config.patience_decay
+    stop = False
 
     if multi_scale:
         img_sz_min = round(img_size / 32 / 1.5) + 1
@@ -353,6 +360,7 @@ def train():
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
+    bn_opt = BNOptimizer(0.002, 15)
 
     print('Starting %s for %g epochs...' % ('prebias' if opt.prebias else 'training', epochs))
 
@@ -453,7 +461,7 @@ def train():
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
 
-            BNOptimizer.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
+            bn_opt.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
 
             # Accumulate gradient for x batches before optimizing
             if ni % accumulate == 0:
@@ -508,12 +516,24 @@ def train():
             bn_numpy = bn_weights.numpy()
             with open(bn_file, "a+") as f:
                 f.write("{}: {}\n".format(epoch, str(np.mean(bn_numpy))))
+            bn_opt.set_flag(np.mean(bn_numpy))
             tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         # Update best mAP
         fitness, P = results[2], results[0]  # mAP
         if fitness > best_fitness and P > 0.5:
             best_fitness = fitness
+
+        if bn_opt.stop_sparsing():
+            early_stoping(list(results)[-3],list(results)[-2])#valGiou
+            if early_stoping.early_stop:
+                optimizer, lr = lr_decay(optimizer, lr)
+                decay += 1
+                if decay > opt.lr_decay_time:
+                    stop = True
+                else:
+                    decay_epoch.append(epoch)
+                    early_stoping.reset(int(config.patience * patience_decay[decay]))
 
         # Save training results
         save = (not opt.nosave) or (final_epoch and not opt.evolve) or opt.prebias
@@ -543,6 +563,11 @@ def train():
 
             # Delete checkpoint
             del chkpt
+
+        if stop:
+            final_epoch = epoch + 1
+            print("Training finished at epoch {}".format(epoch))
+            break
 
             # end epoch ----------------------------------------------------------------------------------------------------
 

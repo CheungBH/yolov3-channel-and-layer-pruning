@@ -135,11 +135,20 @@ def write_cfg(cfg_file, module_defs):
     return cfg_file
 
 
-class BNOptimizer():
+class BNOptimizer:
+    def __init__(self, converge_val, count_max):
+        self.count = 0
+        self.min_bn = converge_val
+        self.count_max = count_max
+        self.flag = False
+        self.decay = False
 
-    @staticmethod
-    def updateBN(sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
+    def updateBN(self, sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
         if sr_flag:
+            if self.count > self.count_max:
+                s = s * 0.01
+                self.decay = True
+
             # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
             for idx in prune_idx:
                 # Squential(Conv, BN, Lrelu)
@@ -150,6 +159,17 @@ class BNOptimizer():
                     bn_module = module_list[idx][1]
                     #bn_module.weight.grad.data.add_(0.5 * s * torch.sign(bn_module.weight.data) * (1 - idx2mask[idx].cuda()))
                     bn_module.weight.grad.data.sub_(0.99 * s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
+
+    def set_flag(self, val):
+        if val < self.min_bn:
+            self.flag = True
+        else:
+            self.flag = False
+
+    def stop_sparsing(self):
+        if self.decay:
+            return True
+        return False
 
 
 def obtain_quantiles(bn_weights, num_quantile=5):

@@ -59,7 +59,7 @@ def train():
     if 'pw' not in opt.arc:  # remove BCELoss positive weights
         config.hyp['cls_pw'] = 1.
         config.hyp['obj_pw'] = 1.
-    early_stoping = EarlyStopping(patience=config.patience,verbose=True)
+    early_stoping = EarlyStopping(patience=config.patience, verbose=True)
     # Initialize
     init_seeds()
     multi_scale = opt.multi_scale
@@ -378,7 +378,7 @@ def train():
             lr = opt.LR
         if epoch > config.warm_up:
             early_stoping(list(results)[-3],list(results)[-2])#valGiou
-            if early_stoping.early_stop :
+            if early_stoping.early_stop:
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
                 if decay > opt.lr_decay_time:
