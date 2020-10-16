@@ -525,7 +525,7 @@ def train():
             best_fitness = fitness
 
         if bn_opt.stop_sparsing():
-            early_stoping(list(results)[-3],list(results)[-2])#valGiou
+            early_stoping(list(results)[-3], list(results)[-2])#valGiou
             if early_stoping.early_stop:
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1

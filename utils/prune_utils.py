@@ -140,7 +140,6 @@ class BNOptimizer:
         self.count = 0
         self.min_bn = converge_val
         self.count_max = count_max
-        self.flag = False
         self.decay = False
 
     def updateBN(self, sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
@@ -162,14 +161,10 @@ class BNOptimizer:
 
     def set_flag(self, val):
         if val < self.min_bn:
-            self.flag = True
-        else:
-            self.flag = False
+            self.count += 1
 
     def stop_sparsing(self):
-        if self.decay:
-            return True
-        return False
+        return self.decay
 
 
 def obtain_quantiles(bn_weights, num_quantile=5):
