@@ -368,6 +368,14 @@ def train():
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
     bn_opt = BNOptimizer(0.002, 15, opt.s)
 
+    # results, maps = test.test(cfg,
+    #     #                           data,
+    #     #                           batch_size=batch_size,
+    #     #                           img_size=opt.img_size,
+    #     #                           model=model,
+    #     #                           conf_thres=0.1,  # 0.1 for speed
+    #     #                           writer=tb_writer)
+
     def adjust_learning_rate(optimizer, lr):
         """调整学习率进行warm up和学习率衰减
         """
