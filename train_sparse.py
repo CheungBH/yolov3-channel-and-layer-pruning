@@ -480,7 +480,7 @@ def train():
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
 
-            bn_opt.updateBN(sr_flag, model.module_list, prune_idx, epoch, idx2mask, opt)
+            bn_opt.updateBN(sr_flag, model.module_list, prune_idx, idx2mask)
 
             # Accumulate gradient for x batches before optimizing
             if ni % accumulate == 0:
@@ -534,7 +534,7 @@ def train():
             bn_weights = gather_bn_weights(model.module_list, prune_idx)
             bn_numpy = bn_weights.numpy()
             with open(bn_file, "a+") as f:
-                f.write("Epoch: {}, lr: {}, s: {}, bn_ave: {}\n".
+                f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}\n".
                         format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy))))
             bn_opt.set_flag(np.mean(bn_numpy))
             tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')

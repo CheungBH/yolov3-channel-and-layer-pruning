@@ -136,19 +136,22 @@ def write_cfg(cfg_file, module_defs):
 
 
 class BNOptimizer:
-    def __init__(self, converge_val, count_max, s=0):
+    def __init__(self, converge_val, count_max, s=0, decay=0.01):
         self.count = 0
         self.min_bn = converge_val
         self.count_max = count_max
         self.decayed = False
         self.base_s = s
+        self.decay_s = decay
         self.curr_s = 0
 
-    def updateBN(self, sr_flag, module_list, prune_idx, epoch, idx2mask=None, opt=None):
+    def updateBN(self, sr_flag, module_list, prune_idx, idx2mask=None):
         if sr_flag:
             if self.count > self.count_max:
-                self.curr_s = self.base_s * 0.01
+                self.curr_s = self.base_s * self.decay_s
                 self.decayed = True
+            else:
+                self.curr_s = self.base_s
 
             # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
             # print("Current s is {}".format(s))
