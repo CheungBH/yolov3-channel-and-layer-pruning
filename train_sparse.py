@@ -410,7 +410,7 @@ def train():
             ni = i + nb * epoch  # number integrated batches (since train start)
 
             # 调整学习率，进行warm up和学习率衰减
-            lr = adjust_learning_rate(optimizer, 0.1)
+            lr = adjust_learning_rate(optimizer, lr)
             if i == 0:
                 print('learning rate:', lr)
 
