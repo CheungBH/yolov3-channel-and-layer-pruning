@@ -86,10 +86,10 @@ def test(cfg,
         output = non_max_suppression(inf_out, conf_thres=conf_thres, nms_thres=nms_thres)
         all_none = [None] * len(output)
 
-        if writer and None not in output and write_tb:
-            outs = out2ls(output)
-            write_tb = False
-            plot_output(imgs, outs, writer)
+        # if writer and write_tb:
+        #     outs = out2ls(output)
+        #     write_tb = False
+        #     plot_output(imgs, outs, writer)
 
         # Statistics per image
         for si, pred in enumerate(output):

@@ -136,35 +136,38 @@ def write_cfg(cfg_file, module_defs):
 
 
 class BNOptimizer:
-    def __init__(self, converge_val, count_max):
+    def __init__(self, converge_val, count_max, s=0):
         self.count = 0
         self.min_bn = converge_val
         self.count_max = count_max
-        self.decay = False
+        self.decayed = False
+        self.base_s = s
+        self.curr_s = 0
 
-    def updateBN(self, sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
+    def updateBN(self, sr_flag, module_list, prune_idx, epoch, idx2mask=None, opt=None):
         if sr_flag:
             if self.count > self.count_max:
-                s = s * 0.01
-                self.decay = True
+                self.curr_s = self.base_s * 0.01
+                self.decayed = True
 
             # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
+            # print("Current s is {}".format(s))
             for idx in prune_idx:
                 # Squential(Conv, BN, Lrelu)
                 bn_module = module_list[idx][1]
-                bn_module.weight.grad.data.add_(s * torch.sign(bn_module.weight.data))  # L1
+                bn_module.weight.grad.data.add_(self.curr_s * torch.sign(bn_module.weight.data))  # L1
             if idx2mask:
                 for idx in idx2mask:
                     bn_module = module_list[idx][1]
                     #bn_module.weight.grad.data.add_(0.5 * s * torch.sign(bn_module.weight.data) * (1 - idx2mask[idx].cuda()))
-                    bn_module.weight.grad.data.sub_(0.99 * s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
+                    bn_module.weight.grad.data.sub_(0.99 * self.curr_s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
 
     def set_flag(self, val):
         if val < self.min_bn:
             self.count += 1
 
-    def stop_sparsing(self):
-        return self.decay
+    def get_s(self):
+        return self.curr_s
 
 
 def obtain_quantiles(bn_weights, num_quantile=5):

@@ -17,7 +17,7 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -164,7 +164,7 @@ def train():
     print("The FLOPs of current model is {}".format(flops))
     print("The params of current model is {}".format(params))
 
-    if opt.adam:
+    if opt.optimize == 'adam': #将网络数数放到优化器
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
         # optimizer = AdaBound(pg0, lr=hyp['lr0'], final_lr=0.1)
     else:
@@ -279,25 +279,25 @@ def train():
     #     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[round(opt.epochs * x) for x in [0.8, 0.9]], gamma=0.1)
     # scheduler.last_epoch = start_epoch - 1
 
-    def adjust_learning_rate(optimizer, gamma, epoch, iteration, epoch_size):
-        """调整学习率进行warm up和学习率衰减
-        """
-        step_index = 0
-        if epoch < 6:
-            # 对开始的6个epoch进行warm up
-            lr = 1e-6 + (hyp['lr0'] - 1e-6) * iteration / (epoch_size * 2)
-        else:
-            if epoch > opt.epochs * 0.7:
-                # 在进行总epochs的70%时，进行以gamma的学习率衰减
-                step_index = 1
-            if epoch > opt.epochs * 0.9:
-                # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
-                step_index = 2
-
-            lr = hyp['lr0'] * (gamma ** (step_index))
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
-        return lr
+    # def adjust_learning_rate(optimizer, gamma, epoch, iteration, epoch_size):
+    #     """调整学习率进行warm up和学习率衰减
+    #     """
+    #     step_index = 0
+    #     if epoch < 6:
+    #         # 对开始的6个epoch进行warm up
+    #         lr = 1e-6 + (hyp['lr0'] - 1e-6) * iteration / (epoch_size * 2)
+    #     else:
+    #         if epoch > opt.epochs * 0.7:
+    #             # 在进行总epochs的70%时，进行以gamma的学习率衰减
+    #             step_index = 1
+    #         if epoch > opt.epochs * 0.9:
+    #             # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
+    #             step_index = 2
+    #
+    #         lr = hyp['lr0'] * (gamma ** (step_index))
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] = lr
+    #     return lr
 
     # # Plot lr schedule
     # y = []
@@ -360,7 +360,24 @@ def train():
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
-    bn_opt = BNOptimizer(0.002, 15)
+    bn_opt = BNOptimizer(0.002, 15, opt.s)
+
+    def adjust_learning_rate(optimizer, lr):
+        """调整学习率进行warm up和学习率衰减
+        """
+        # step_index = 0
+        # else:
+        #     if epoch > Epochs * 0.7:
+        #         # 在进行总epochs的70%时，进行以gamma的学习率衰减
+        #         step_index = 1
+        #     if epoch > Epochs * 0.9:
+        #         # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
+        #         step_index = 2
+
+        # lr = hyp['lr0'] * (gamma ** (step_index))
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+        return lr
 
     print('Starting %s for %g epochs...' % ('prebias' if opt.prebias else 'training', epochs))
 
@@ -387,11 +404,13 @@ def train():
         msoft_target = torch.zeros(1).to(device)
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         sr_flag = get_sr_flag(epoch, opt.sr)
+        print("Current lr is {}".format(lr))
+
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             ni = i + nb * epoch  # number integrated batches (since train start)
 
             # 调整学习率，进行warm up和学习率衰减
-            lr = adjust_learning_rate(optimizer, 0.1, epoch, ni, nb)
+            lr = adjust_learning_rate(optimizer, 0.1)
             if i == 0:
                 print('learning rate:', lr)
 
@@ -461,7 +480,7 @@ def train():
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
 
-            bn_opt.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
+            bn_opt.updateBN(sr_flag, model.module_list, prune_idx, epoch, idx2mask, opt)
 
             # Accumulate gradient for x batches before optimizing
             if ni % accumulate == 0:
@@ -504,8 +523,8 @@ def train():
 
         # Write Tensorboard results
         if tb_writer:
-            tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1],
-                                dataformats='HWC')
+            # tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1],
+            #                     dataformats='HWC')
 
             x = list(mloss) + list(results) + [msoft_target]
             for xi, title in zip(x, titles):
@@ -515,7 +534,8 @@ def train():
             bn_weights = gather_bn_weights(model.module_list, prune_idx)
             bn_numpy = bn_weights.numpy()
             with open(bn_file, "a+") as f:
-                f.write("{}: {}\n".format(epoch, str(np.mean(bn_numpy))))
+                f.write("Epoch: {}, lr: {}, s: {}, bn_ave: {}\n".
+                        format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy))))
             bn_opt.set_flag(np.mean(bn_numpy))
             tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
@@ -524,11 +544,12 @@ def train():
         if fitness > best_fitness and P > 0.5:
             best_fitness = fitness
 
-        if bn_opt.stop_sparsing():
+        if bn_opt.decayed:
             early_stoping(list(results)[-3], list(results)[-2])#valGiou
             if early_stoping.early_stop:
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
+                bn_opt.base_s /= 5
                 if decay > opt.lr_decay_time:
                     stop = True
                 else:
@@ -634,13 +655,18 @@ if __name__ == '__main__':
     parser.add_argument('--arc', type=str, default='defaultpw', help='yolo architecture')  # defaultpw, uCE, uBCE
     parser.add_argument('--prebias', action='store_true', help='transfer-learn yolo biases prior to training')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
-    parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1) or cpu')
+    parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1) or cpu')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--var', type=float, help='debug variable')
     parser.add_argument('--sparsity-regularization', '-sr', dest='sr', action='store_true',
                         help='train with channel sparsity regularization')
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
+    parser.add_argument('--lr_decay_time', type=int, default=2, help='lr decay time')
+    parser.add_argument('--optimize', type=str, default='sgd', help='optimizer(adam,sgd)')
+    parser.add_argument('--LR', type=float,default=0.001, help='learning rate')
+    parser.add_argument('--save_interval', default=1, type=int,help='interval')
+
 
     opt = parser.parse_args()
 

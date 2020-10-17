@@ -18,6 +18,8 @@ torch/lib/*.so*
 torch/lib/*.dylib*
 torch/lib/*.h
 error
+sparse_result
+pretrained
 cfg/config.py
 train_cmd.py
 LICENSE
