@@ -76,6 +76,12 @@ def update_result(best, curr):
 
 
 def train():
+    mixed_precision = True
+    try:  # Mixed precision training https://github.com/NVIDIA/apex
+        from apex import amp
+    except:
+        mixed_precision = False  # not installed
+
     cfg = opt.cfg
     t_cfg = opt.t_cfg  # teacher model cfg for knowledge distillation
     data = opt.data
@@ -547,6 +553,7 @@ def train():
         if bn_opt.decayed:
             early_stoping(list(results)[-3], list(results)[-2])#valGiou
             if early_stoping.early_stop:
+                mixed_precision = False
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
                 bn_opt.base_s /= 5
