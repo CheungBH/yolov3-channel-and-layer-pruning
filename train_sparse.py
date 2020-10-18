@@ -561,6 +561,12 @@ def train():
         tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         if bn_opt.decayed:
+            chkpt = {'epoch': epoch,
+                     'best_fitness': best_fitness,
+                     'training_results': f.read(),
+                     'model': model.module.state_dict() if type(
+                         model) is nn.parallel.DistributedDataParallel else model.state_dict(),
+                     'optimizer': None if final_epoch else optimizer.state_dict()}
             torch.save(chkpt, wdir + 'sparse_end.pt')
             early_stoping(list(results)[-3], list(results)[-2])#valGiou
             if early_stoping.early_stop:
