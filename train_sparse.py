@@ -366,7 +366,7 @@ def train():
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
-    bn_opt = BNOptimizer(0.002, 15, opt.s)
+    bn_opt = BNOptimizer(config.sparse_decay, opt.s)
 
     # results, maps = test.test(cfg,
     #     #                           data,
@@ -545,26 +545,30 @@ def train():
                 tb_writer.add_scalar(title, xi, epoch)
 
             best_result = update_result(best_result, x)
-            bn_weights = gather_bn_weights(model.module_list, prune_idx)
-            bn_numpy = bn_weights.numpy()
-            with open(bn_file, "a+") as f:
-                f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}\n".
-                        format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy))))
-            bn_opt.set_flag(np.mean(bn_numpy))
-            tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
+
 
         # Update best mAP
         fitness, P = results[2], results[0]  # mAP
         if fitness > best_fitness and P > 0.5:
             best_fitness = fitness
 
+        bn_weights = gather_bn_weights(model.module_list, prune_idx)
+        bn_numpy = bn_weights.numpy()
+        with open(bn_file, "a+") as f:
+            f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}, map--->{}\n".
+                    format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy)), fitness))
+        bn_opt.set_flag(np.mean(bn_numpy))
+        tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
+
         if bn_opt.decayed:
+            torch.save(chkpt, wdir + 'sparse_end.pt')
             early_stoping(list(results)[-3], list(results)[-2])#valGiou
             if early_stoping.early_stop:
                 mixed_precision = False
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
-                bn_opt.base_s /= 5
+                bn_opt.curr_s /= 5
+                torch.save(chkpt, wdir + 'lr_decay{}.pt'.format(decay))
                 if decay > opt.lr_decay_time:
                     stop = True
                 else:

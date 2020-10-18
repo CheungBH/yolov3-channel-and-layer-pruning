@@ -136,25 +136,17 @@ def write_cfg(cfg_file, module_defs):
 
 
 class BNOptimizer:
-    def __init__(self, converge_val, count_max, s=0, decay=0.01):
-        self.count = 0
-        self.min_bn = converge_val
-        self.count_max = count_max
+    def __init__(self, decays, s=0):
         self.decayed = False
-        self.base_s = s
-        self.decay_s = decay
-        self.curr_s = 0
+        self.decay_time = 0
+        self.threshs, self.decays = [], []
+        for k, v in decays.items():
+            self.threshs.append(k)
+            self.decays.append(v)
+        self.curr_s, self.base_s = s, s
 
     def updateBN(self, sr_flag, module_list, prune_idx, idx2mask=None):
         if sr_flag:
-            if self.count > self.count_max:
-                self.curr_s = self.base_s * self.decay_s
-                self.decayed = True
-            else:
-                self.curr_s = self.base_s
-
-            # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
-            # print("Current s is {}".format(s))
             for idx in prune_idx:
                 # Squential(Conv, BN, Lrelu)
                 bn_module = module_list[idx][1]
@@ -166,8 +158,12 @@ class BNOptimizer:
                     bn_module.weight.grad.data.sub_(0.99 * self.curr_s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
 
     def set_flag(self, val):
-        if val < self.min_bn:
-            self.count += 1
+        if self.decay_time < len(self.decays):
+            if val < self.threshs[self.decay_time]:
+                self.curr_s = self.base_s * self.decays[self.decay_time]
+                self.decay_time += 1
+        else:
+            self.decayed = True
 
     def get_s(self):
         return self.curr_s

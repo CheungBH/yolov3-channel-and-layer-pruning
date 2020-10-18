@@ -28,4 +28,5 @@ hyp = {'giou': 1.0,  # 1.582 giou loss gain
        'scale': 0.1059,  # image scale (+/- gain)
        'shear': 0.5768}  # image shear (+/- deg)
 
+sparse_decay = {0.1: 0.1, 0.01: 0.01}
 
