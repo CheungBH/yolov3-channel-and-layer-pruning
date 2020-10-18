@@ -49,7 +49,7 @@ def check_name(cmd):
     if '--freeze False' in cmd:
         cmd=cmd.replace('--freeze False','')
     if '--sr True' in cmd:
-        cmd = cmd.replace('--sr True', '--sr')
+        cmd = cmd.replace('--sr True', '-sr')
     if '--sr False' in cmd:
         cmd = cmd.replace('--sr False', '')
     return cmd
