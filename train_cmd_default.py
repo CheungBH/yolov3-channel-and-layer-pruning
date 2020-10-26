@@ -1,9 +1,11 @@
 #-*-coding:utf-8-*-
 
 cmds = [
-    'python train_sparse.py --cfg pretrained/26/yolov3-original-1cls-leaky.cfg --batch-size 8 --s 1E-3 --epochs 400 -sr '
-    '--LR 1E-3 --optimize sgd --weights weights/sparse/1/last.pt --save_interval 10 --multi-scale True '
-    '--img_size 416 --rect True --data data/gray/gray.data  --wdir 1'
+    'python train_sparse.py --cfg pretrained/26/yolov3-original-1cls-leaky.cfg --batch-size 8 --s 1.50E-03 --epochs 400 --LR 0.002 --optimize sgd --weights pretrained/26/best.weights --save_interval 10 --multi-scale True --img_size 416 --rect True --data data/gray/gray.data --sr True --s_end 0.002 --s_decay 1 --lr_decay 0 --wdir tmp_9 ',
+    'python train_sparse.py --cfg pretrained/26/yolov3-original-1cls-leaky.cfg --batch-size 8 --s 2.00E-03 --epochs 300 --LR 0.002 --optimize sgd --weights pretrained/26/best.weights --save_interval 10 --multi-scale True --img_size 416 --rect True --data data/gray/gray.data --sr True --s_end 0.005 --s_decay 1 --lr_decay 0 --wdir tmp_10 ',
+    'python train_sparse.py --cfg pretrained/26/yolov3-original-1cls-leaky.cfg --batch-size 8 --s 2.50E-03 --epochs 300 --LR 0.002 --optimize sgd --weights pretrained/26/best.weights --save_interval 10 --multi-scale True --img_size 416 --rect True --data data/gray/gray.data --sr True --s_end 0.005 --s_decay 1 --lr_decay 0 --wdir tmp_11 ',
+    'python train_sparse.py --cfg pretrained/26/yolov3-original-1cls-leaky.cfg --batch-size 8 --s 1.50E-03 --epochs 300 --LR 0.002 --optimize sgd --weights pretrained/26/best.weights --save_interval 10 --multi-scale True --img_size 416 --rect True --data data/gray/gray.data --sr True --s_end 0.005 --s_decay 1 --lr_decay 0 --wdir tmp_12 ',
+
 ]
 
 def check_name(cmd):
