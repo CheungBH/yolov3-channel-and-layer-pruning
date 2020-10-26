@@ -41,7 +41,7 @@ for idx, mdl in enumerate(data[1:]):
             valid = True
 
     # tmp += "--expFolder {}".format(batch_folder)
-    tmp += "\t--wdir {}".format(idx+1)
+    # tmp += "\t--wdir {}".format(idx+1)
     cmd = begin + tmp + "'\n"
     if valid:
         cmds.append(cmd)
