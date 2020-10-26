@@ -575,7 +575,7 @@ def train():
                 decay += 1
                 bn_opt.curr_s /= 5
                 torch.save(chkpt, wdir + 'lr_decay{}.pt'.format(decay))
-                if decay > opt.lr_decay_time:
+                if decay > len(patience_decay):
                     stop = True
                 else:
                     decay_epoch.append(epoch)
