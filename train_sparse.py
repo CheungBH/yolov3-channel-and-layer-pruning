@@ -699,7 +699,7 @@ if __name__ == '__main__':
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
     parser.add_argument('--optimize', type=str, default='sgd', help='optimizer(adam,sgd)')
     parser.add_argument('--LR', type=float, default=0.001, help='learning rate')
-    parser.add_argument('--lr_decay', action=0, help='whether lr drops')
+    parser.add_argument('--lr_decay', default=0, help='whether lr drops')
     parser.add_argument('--save_interval', default=1, type=int, help='interval')
 
 
