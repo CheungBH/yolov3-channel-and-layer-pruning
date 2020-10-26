@@ -1,4 +1,4 @@
-cfg,batch-size,s,epochs,LR,optimize,weights,save_interval,multi-scale,img_size,rect,data,sr,s_end,s_dacay,lr_decay,wdir
+cfg,batch-size,s,epochs,LR,optimize,weights,save_interval,multi-scale,img_size,rect,data,sr,s_end,s_decay,lr_decay,wdir
 pretrained/prev/yolov3-spp-1cls.cfg,8,1.00E-03,400,0.001,sgd,pretrained/26/yolov3-original-1cls-leaky.cfg,10,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_1
 pretrained/prev/yolov3-spp-1cls.cfg,8,2.00E-03,400,0.001,sgd,pretrained/26/yolov3-original-1cls-leaky.cfg,10,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_2
 pretrained/prev/yolov3-spp-1cls.cfg,8,8.00E-04,400,0.001,sgd,pretrained/26/yolov3-original-1cls-leaky.cfg,10,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_3
