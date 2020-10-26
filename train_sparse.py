@@ -549,7 +549,7 @@ def train():
 
         # Update best mAP
         fitness, P = results[2], results[0]  # mAP
-        if fitness > best_fitness and P > 0.5:
+        if fitness > best_fitness and P > 0.5 and bn_opt.decayed:
             best_fitness = fitness
 
         bn_weights = gather_bn_weights(model.module_list, prune_idx)
