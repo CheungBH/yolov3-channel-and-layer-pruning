@@ -61,4 +61,4 @@ Dockerfile
 result
 tensorboard
 train_result/demo_folder/gray_warm/
-
+prune/config.py
