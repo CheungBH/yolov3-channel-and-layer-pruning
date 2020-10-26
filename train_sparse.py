@@ -17,6 +17,7 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
+
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 mixed_precision = True
@@ -366,7 +367,10 @@ def train():
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
     t0 = time.time()
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
-    bn_opt = BNOptimizer(config.sparse_decay, opt.s)
+
+    sparse_decay = config.sparse_decay
+    sparse_decay[opt.s_end] = opt.s_decay
+    bn_opt = BNOptimizer(sparse_decay, opt.s)
 
     # results, maps = test.test(cfg,
     #     #                           data,
@@ -555,8 +559,8 @@ def train():
         bn_weights = gather_bn_weights(model.module_list, prune_idx)
         bn_numpy = bn_weights.numpy()
         with open(bn_file, "a+") as f:
-            f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}, map--->{}\n".
-                    format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy)), fitness))
+            f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}, bn_var--->{}, map--->{}\n".
+                    format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy)), str(np.var(bn_numpy)), fitness))
         bn_opt.set_flag(np.mean(bn_numpy))
         tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
@@ -686,11 +690,13 @@ if __name__ == '__main__':
     parser.add_argument('--sparsity-regularization', '-sr', dest='sr', action='store_true',
                         help='train with channel sparsity regularization')
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
+    parser.add_argument('--s_end', type=float, default=0.002, help='The end of sparse training')
+    parser.add_argument('--s_decay', type=float, default=0.01, help='decay of sparse training')
+
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
-    parser.add_argument('--lr_decay_time', type=int, default=2, help='lr decay time')
     parser.add_argument('--optimize', type=str, default='sgd', help='optimizer(adam,sgd)')
     parser.add_argument('--LR', type=float,default=0.001, help='learning rate')
-    parser.add_argument('--save_interval', default=1, type=int,help='interval')
+    parser.add_argument('--save_interval', default=1, type=int, help='interval')
 
 
     opt = parser.parse_args()
