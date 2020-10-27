@@ -157,13 +157,15 @@ class BNOptimizer:
                     #bn_module.weight.grad.data.add_(0.5 * s * torch.sign(bn_module.weight.data) * (1 - idx2mask[idx].cuda()))
                     bn_module.weight.grad.data.sub_(0.99 * self.curr_s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
 
-    def set_flag(self, val):
+    def set_flag(self, val, file):
         if self.decay_time < len(self.decays):
             if val < self.threshs[self.decay_time]:
                 self.curr_s = self.base_s * self.decays[self.decay_time]
                 self.decay_time += 1
+                file.write("---------------- Sparse decay {} -------------------\n".format(self.decay_time))
         else:
             self.decayed = True
+            file.write("---------------- Sparsity End -------------------\n")
 
     def get_s(self):
         return self.curr_s

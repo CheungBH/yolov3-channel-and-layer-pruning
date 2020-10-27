@@ -561,13 +561,14 @@ def train():
         with open(bn_file, "a+") as f:
             f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}, bn_var--->{}, map--->{}\n".
                     format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy)), str(np.var(bn_numpy)), fitness))
-        bn_opt.set_flag(np.mean(bn_numpy))
+            bn_opt.set_flag(np.mean(bn_numpy), f)
         tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         if bn_opt.decayed:
+            if not int(opt.lr_decay):
+                stop = True
             chkpt = {'epoch': epoch,
                      'best_fitness': best_fitness,
-                     # 'training_results': f.read(),
                      'model': model.module.state_dict() if type(
                          model) is nn.parallel.DistributedDataParallel else model.state_dict(),
                      'optimizer': None if final_epoch else optimizer.state_dict()}
@@ -577,16 +578,16 @@ def train():
                 mixed_precision = False
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
+                with open(bn_file, "a+") as f:
+                    file.write("---------------- lr decay {} -------------------\n".format(decay))
                 bn_opt.curr_s /= 5
+
                 torch.save(chkpt, wdir + 'lr_decay{}.pt'.format(decay))
                 if decay > len(patience_decay):
                     stop = True
                 else:
                     decay_epoch.append(epoch)
                     early_stoping.reset(int(config.patience * patience_decay[decay]))
-            else:
-                if not opt.lr_decay:
-                    stop = True
 
         # Save training results
         save = (not opt.nosave) or (final_epoch and not opt.evolve) or opt.prebias
