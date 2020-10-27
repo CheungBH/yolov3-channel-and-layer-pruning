@@ -163,9 +163,14 @@ class BNOptimizer:
                 self.curr_s = self.base_s * self.decays[self.decay_time]
                 self.decay_time += 1
                 file.write("---------------- Sparse decay {} -------------------\n".format(self.decay_time))
-        else:
+                if self.decay_time == len(self.decays):
+                    self.decayed = True
+                    file.write("---------------- Sparsity End -------------------\n")
+        elif not self.decayed:
             self.decayed = True
             file.write("---------------- Sparsity End -------------------\n")
+        else:
+            pass
 
     def get_s(self):
         return self.curr_s

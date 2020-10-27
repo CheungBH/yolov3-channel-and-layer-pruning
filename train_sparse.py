@@ -565,7 +565,7 @@ def train():
         tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
 
         if bn_opt.decayed:
-            if not int(opt.lr_decay):
+            if int(opt.lr_decay) != 0:
                 stop = True
             chkpt = {'epoch': epoch,
                      'best_fitness': best_fitness,
