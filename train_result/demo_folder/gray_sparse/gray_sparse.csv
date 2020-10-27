@@ -13,6 +13,13 @@ pretrained/26/yolov3-original-1cls-leaky.cfg,8,2.00E-03,300,0.002,sgd,pretrained
 pretrained/26/yolov3-original-1cls-leaky.cfg,8,2.50E-03,300,0.002,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_11
 pretrained/26/yolov3-original-1cls-leaky.cfg,8,1.50E-03,300,0.002,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_12
 ,,,,,,,,,,,,,,,,
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,3.00E-03,400,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_7
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,3.50E-03,400,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_8
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,2.00E-03,400,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_9
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,3.00E-03,300,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_10
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,3.50E-03,300,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_11
+pretrained/26/yolov3-original-1cls-leaky.cfg,8,2.00E-03,300,0.003,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_12
+,,,,,,,,,,,,,,,,
 pretrained/26/yolov3-original-1cls-leaky.cfg,8,5.00E-04,400,0.0005,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_13
 pretrained/26/yolov3-original-1cls-leaky.cfg,8,8.00E-04,400,0.0005,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.002,1,0,tmp_14
 pretrained/26/yolov3-original-1cls-leaky.cfg,8,5.00E-04,300,0.0005,sgd,pretrained/26/best.weights,20,TRUE,416,TRUE,data/gray/gray.data,TRUE,0.005,1,0,tmp_15
