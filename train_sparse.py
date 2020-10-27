@@ -569,7 +569,6 @@ def train():
                 stop = True
             chkpt = {'epoch': epoch,
                      'best_fitness': best_fitness,
-                     # 'training_results': f.read(),
                      'model': model.module.state_dict() if type(
                          model) is nn.parallel.DistributedDataParallel else model.state_dict(),
                      'optimizer': None if final_epoch else optimizer.state_dict()}
