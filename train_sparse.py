@@ -102,8 +102,10 @@ def train():
 
     if "last" not in weights and "test" not in wdir:
         os.makedirs(wdir, exist_ok=True)
-    if "test" in wdir:
+    elif "test" in wdir:
         os.makedirs(wdir, exist_ok=True)
+    else:
+        os.makedirs(wdir)
 
     last = wdir + 'last.pt'
     best = wdir + 'best.pt'
