@@ -581,7 +581,7 @@ def train():
                 optimizer, lr = lr_decay(optimizer, lr)
                 decay += 1
                 with open(bn_file, "a+") as f:
-                    file.write("---------------- lr decay {} -------------------\n".format(decay))
+                    f.write("---------------- lr decay {} -------------------\n".format(decay))
                 bn_opt.curr_s /= 5
 
                 torch.save(chkpt, wdir + 'lr_decay{}.pt'.format(decay))
