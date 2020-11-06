@@ -7,7 +7,7 @@ prune_folder = models
 
 prune_cmd = ["python prune/prune.py --cfg {1} --data {4} --weights {0} --percent {2} --only_metric {3}".
                  format(w, c, per, only_metric, data) for w, c in prune_folder.items() for per in prune]
-# print(prune_cmd)
+print(prune_cmd)
 shortcut_prune_cmd = ["python prune/shortcut_prune.py --cfg {1} --data {4} --weights {0} --percent {2} " \
                       "--only_metric {3}".
                           format(w, c, per, only_metric, data) for w, c in prune_folder.items() for per in shortcut_p]

@@ -1,18 +1,36 @@
 #-*-coding:utf-8-*-
 
 cmds = [
+    "python train_sparse.py --wdir test_black2_s1E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0001 --prune 1",
+    # "python train_sparse.py --wdir black2_s2E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0002 --prune 1",
+    # "python train_sparse.py --wdir black2_s3E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0003 --prune 1",
+    # "python train_sparse.py --wdir black2_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0004 --prune 1",
+    # "python train_sparse.py --wdir black2_s5E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0005 --prune 1",
+    # "python train_sparse.py --wdir black2_s6E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0006 --prune 1",
+    # "python train_sparse.py --wdir black2_s7E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0007 --prune 1",
+    # "python train_sparse.py --wdir black2_s8E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0008 --prune 1",
+    # "python train_sparse.py --wdir black2_s9E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/black/black.data --weights weights/black_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0009 --prune 1",
+    #
+    # "python train_sparse.py --wdir rgb146_s1E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0001 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s2E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0002 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s3E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0003 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0004 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s5E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0005 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s6E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0006 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s7E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0007 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s8E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0008 --prune 1",
+    # "python train_sparse.py --wdir rgb146_s9E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/rgb/rgb.data --weights weights/rgb_146/best.weights --batch-size 4 --epochs 100 -sr --s 0.0009 --prune 1",
+    #
+    # "python train_sparse.py --wdir ceiling2_s1E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0001 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s2E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0002 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s3E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0003 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0004 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s5E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0005 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s6E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0006 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s7E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0007 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s8E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0008 --prune 1",
+    # "python train_sparse.py --wdir ceiling2_s9E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/ceiling/ceiling.data --weights weights/ceiling_2/best.weights --batch-size 4 --epochs 100 -sr --s 0.0009 --prune 1",
 
-
-    # "python train.py --wdir gray26_sE-3 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 80 -sr --s 0.001 --prune 1",
-    "python train_sparse.py --wdir gray26_s1E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 150 -sr --s 0.001 --prune 1",
-    "python train_sparse.py --wdir gray26_s2E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 140 -sr --s 0.002 --prune 1",
-    "python train_sparse.py --wdir gray26_s3E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 130 -sr --s 0.003 --prune 1",
-    "python train_sparse.py --wdir gray26_s4E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 120 -sr --s 0.004 --prune 1",
-    "python train_sparse.py --wdir gray26_s5E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 110 -sr --s 0.005 --prune 1",
-    "python train_sparse.py --wdir gray26_s6E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 100 -sr --s 0.006 --prune 1",
-    "python train_sparse.py --wdir gray26_s7E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 100 -sr --s 0.007 --prune 1",
-    "python train_sparse.py --wdir gray26_s8E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 100 -sr --s 0.008 --prune 1",
-    "python train_sparse.py --wdir gray26_s9E-4 --cfg cfg/yolov3-original-1cls-leaky.cfg --data data/gray/gray.data --weights weights/best.weights --batch-size 16 --epochs 100 -sr --s 0.009 --prune 1",
 ]
 
 def check_name(cmd):

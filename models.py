@@ -458,5 +458,5 @@ def attempt_download(weights):
 
         assert os.path.exists(weights), msg  # download missing weights from Google Drive
 if __name__ == '__main__':
-    convert(cfg='cfg/yolov3-original-1cls-leaky.cfg',
-            weights='weights/rgb/146/best.pt')
+    convert(cfg='/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg',
+            weights='/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/best.pt')

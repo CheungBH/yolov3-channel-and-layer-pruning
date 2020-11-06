@@ -140,6 +140,10 @@ class BNOptimizer():
     @staticmethod
     def updateBN(sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
         if sr_flag:
+            bn_weights = gather_bn_weights(module_list, prune_idx)
+            bn_numpy = bn_weights.numpy()
+            if np.mean(bn_numpy)<0.01:
+                s=s*0.01
             # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
             for idx in prune_idx:
                 # Squential(Conv, BN, Lrelu)
