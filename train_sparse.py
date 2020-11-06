@@ -17,7 +17,6 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
-
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 mixed_precision = True
