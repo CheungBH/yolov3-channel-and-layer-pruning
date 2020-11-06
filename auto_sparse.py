@@ -16,6 +16,6 @@ if "metric" in sparse_type:
     for weight, cfg in models.items():
         cmd = "python prune/metric.py --cfg {} --weights {} --data {}".format(cfg, weight, data)
         cmds.append(cmd)
-
+print(cmd)
 for c in cmds:
     os.system(c)

@@ -1,24 +1,14 @@
 import os
 models = {
 
-"weights/sparse/gray26_sE-3/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s1E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s2E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s3E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s4E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s5E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s6E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s7E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s8E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-"weights/sparse/gray26_s9E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
-
+"weights/sparse/black2_s1E-4/last.pt": "cfg/yolov3-original-1cls-leaky.cfg",
 
 }
 
 data = "data/gray/gray.data"
 
 # Sparse option
-sparse_type = ["shortcut", "ordinary"]
+sparse_type = [ "ordinary"]
 p_max, p_min = 99, 50
 
 # Prune option
@@ -32,10 +22,10 @@ all_prune_params = [(10, 0.95, 0.01), (15, 0.95, 0.01)]
 
 # Finetune option
 finetune_folders = [
-    os.path.join('prune_result/gray26_s{}E-4-last'.format(j), i)
-    for j in range(6,10)
-    for i in os.listdir('prune_result/gray26_s{}E-4-last'.format(j))
-    if os.path.isdir(os.path.join('prune_result/gray26_s{}E-4-last'.format(j), i))
+    # os.path.join('prune_result/gray26_s{}E-4-last'.format(j), i)
+    # for j in range(6,10)
+    # for i in os.listdir('prune_result/gray26_s{}E-4-last'.format(j))
+    # if os.path.isdir(os.path.join('prune_result/gray26_s{}E-4-last'.format(j), i))
 ]
 
 print(finetune_folders)

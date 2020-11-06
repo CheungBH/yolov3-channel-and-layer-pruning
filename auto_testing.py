@@ -67,8 +67,8 @@ from models import *
 import traceback
 from test import test
 import csv
-path = '/media/hkuit164/MB155_3/result/ceiling/ceiling_result_sean.csv'
-weight_folder='/media/hkuit164/MB155_4/ceiling'
+path = '/media/hkuit164/WD20EJRX/result/train_result/rgb/rgb_result_sean.csv'
+weight_folder='/media/hkuit164/MB155_4/1'
 data_folder = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/test/'
 df = pd.read_csv(path)
 # name is id
@@ -88,18 +88,19 @@ for name in os.listdir(weight_folder):
             else:
                 convert(cfg=cfg, weights=os.path.join(weight_path,'best.pt'))
                 #for data
-                for i in ['far','mul','single_front','single_side','all']:
+                for i in ['all']:
                     data = data_folder+i+'/'+i+'.data'
                     cmd = 'python test.py --cfg {0} --data {1} ' \
                           '--weights {2} --batch-size 8 --img-size {3} ' \
-                          '--conf-thres 0.5 --id {4} --csv_path {5} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name),path)
+                          '--conf-thres 0.5 --id {4} --csv_path {5}  --write_error_img'.format(cfg, data, weight_name,list(img_size)[0], int(name),path)
                     os.system(cmd)
         else:
-            for i in ['far', 'mul', 'single_front', 'single_side', 'all']:
+            # for i in ['far', 'mul', 'single_front', 'single_side', 'all']:
+            for i in ['all']:
                 data = data_folder + i + '/' + i + '.data'
                 cmd = 'python test.py --cfg {0} --data {1} ' \
                   '--weights {2} --batch-size 8 --img-size {3} ' \
-                  '--conf-thres 0.5 --id {4} --csv_path {5} --write_csv'.format(cfg, data, weight_name,list(img_size)[0], int(name), path)
+                  '--conf-thres 0.5 --id {4} --csv_path {5}  --write_error_img'.format(cfg, data, weight_name,list(img_size)[0], int(name), path)
                 # print(cmd)
                 os.system(cmd)
     except:

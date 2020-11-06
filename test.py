@@ -6,7 +6,7 @@ import csv
 from models import *
 from utils.datasets import *
 from utils.utils import *
-
+import copy
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def test(cfg,
          data,
@@ -18,6 +18,7 @@ def test(cfg,
          nms_thres=0.5,
          save_json=False,
          write_csv = False,
+         write_error_img = False,
          model=None,
          writer=None,):
     
@@ -54,7 +55,7 @@ def test(cfg,
     dataloader = DataLoader(dataset,
                             batch_size=batch_size,
                             num_workers=1,
-                            shuffle=True,
+                            shuffle=False,
                             pin_memory=True,
                             collate_fn=dataset.collate_fn)
 
@@ -66,11 +67,12 @@ def test(cfg,
     loss = torch.zeros(3)
     write_tb = True
     jdict, stats, ap, ap_class = [], [], [], []
+    all_path = []
     for batch_i, (imgs, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         targets = targets.to(device)
         imgs = imgs.to(device)
         _, _, height, width = imgs.shape  # batch size, channels, height, width
-
+        all_path.extend(paths)
         # Plot images with bounding boxes
         if batch_i == 0 and not os.path.exists('test_batch0.jpg'):
             plot_images(imgs=imgs, targets=targets, paths=paths, fname='test_batch0.jpg')
@@ -156,6 +158,11 @@ def test(cfg,
             stats.append((correct, pred[:, 4].cpu(), pred[:, 6].cpu(), tcls))
 
     # Compute statistics
+    stats_copy = copy.deepcopy(stats)
+    for x in list(zip(*stats_copy))[0]:
+        if len(x)==0:
+            x.append(2)
+    correct_img = list(list(zip(*stats_copy))[0])
     stats = [np.concatenate(x, 0) for x in list(zip(*stats))]  # to numpy
     if len(stats):
         p, r, ap, f1, ap_class = ap_per_class(*stats)
@@ -163,7 +170,13 @@ def test(cfg,
         nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
     else:
         nt = torch.zeros(1)
-
+    if write_error_img:
+        exist = os.path.exists('error_img.csv')
+        with open('error_img.csv', 'a+') as f:
+            f_csv = csv.writer(f)
+            if not exist:
+                f_csv.writerow(all_path)
+            f_csv.writerow(correct_img)
     if write_csv:
         df = pd.read_csv(opt.csv_path)
         df_head = df[0:1]
@@ -232,6 +245,7 @@ if __name__ == '__main__':
     parser.add_argument('--id', type=int, default=000, help='inference size (pixels)')
     parser.add_argument('--csv_path', type=str, default='', help='path to weights file')
     parser.add_argument('--write_csv', action='store_true', help='save test csv file')
+    parser.add_argument('--write_error_img', action='store_true', help='save error ana csv file')
     opt = parser.parse_args()
     print(opt)
 
@@ -245,4 +259,5 @@ if __name__ == '__main__':
              opt.conf_thres,
              opt.nms_thres,
              opt.save_json,
-             opt.write_csv)
+             opt.write_csv,
+             opt.write_error_img)

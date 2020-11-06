@@ -189,22 +189,20 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
             FPR = fpc/ (32-n_p)
 
             # Plot for testing
-            # fig, ax = plt.subplots(1, 2)
-            # ax[0].plot(np.concatenate(([0.], recall,[1.])), np.concatenate(([0.], precision,[0.])))
-            # ax[1].plot(np.concatenate(([0.], FPR)), np.concatenate(([0.], recall)))
-            # ax[0].set_title('PR')
-            # ax[0].set_xlabel('Recall')
-            # ax[0].set_ylabel('Precision')
-            # ax[0].set_xlim(0, 1)
-            # ax[1].set_title('ROC')
-            # ax[1].set_xlabel('FPR')
-            # ax[1].set_ylabel('Recall')
-            # ax[1].set_xlim(0, 1)
+            # fig, ax = plt.subplots(1, 1)
+            # ax.plot(np.concatenate(([0.], recall,[1.])), np.concatenate(([0.], precision,[0.])))
+            # ax.set_title('PR')
+            # ax.set_xlabel('Recall')
+            # ax.set_ylabel('Precision')
+            # ax.set_xlim(0, 1)
             # fig.tight_layout()
-            res = 0
-            for i in range(1,len(recall)):
-                res += (precision[i]+precision[i-1])*(recall[i]-recall[i-1])/2.0
-            print('PR_area:',res)
+            # res = 0
+            # best_point_index = np.where((recall+precision)==np.max(recall+precision))
+            # best_thre  = conf[best_point_index]
+            # print(best_thre)
+            # for i in range(1,len(recall)):
+            #     res += (precision[i]+precision[i-1])*(recall[i]-recall[i-1])/2.0
+            # print('PR_area:',res)
             # plt.show()
             # fig.savefig('PR_curve.png', dpi=300)
 
