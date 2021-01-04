@@ -10,6 +10,7 @@ from models import *
 from utils.datasets import *
 from utils.utils import *
 from utils.prune_utils import *
+from utils.pytorchtools import EarlyStopping
 from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # from model.mobilenet_yolo.yolov3_mobilev2 import YOLOv3
@@ -75,6 +76,12 @@ def update_result(best, curr):
 
 
 def train():
+    mixed_precision = True
+    try:  # Mixed precision training https://github.com/NVIDIA/apex
+        from apex import amp
+    except:
+        mixed_precision = False  # not installed
+
     cfg = opt.cfg
     t_cfg = opt.t_cfg  # teacher model cfg for knowledge distillation
     data = opt.data
@@ -94,8 +101,10 @@ def train():
 
     if "last" not in weights and "test" not in wdir:
         os.makedirs(wdir, exist_ok=True)
-    if "test" in wdir:
+    elif "test" in wdir:
         os.makedirs(wdir, exist_ok=True)
+    else:
+        os.makedirs(wdir)
 
     last = wdir + 'last.pt'
     best = wdir + 'best.pt'
@@ -118,9 +127,15 @@ def train():
         hyp['cls_pw'] = 1.
         hyp['obj_pw'] = 1.
 
+    early_stoping = EarlyStopping(patience=config.patience,verbose=True)
     # Initialize
     init_seeds()
     multi_scale = opt.multi_scale
+    lr = opt.LR
+    decay = 0
+    decay_epoch = []
+    patience_decay = config.patience_decay
+    stop = False
 
     if multi_scale:
         img_sz_min = round(img_size / 32 / 1.5) + 1
@@ -157,7 +172,7 @@ def train():
     print("The FLOPs of current model is {}".format(flops))
     print("The params of current model is {}".format(params))
 
-    if opt.adam:
+    if opt.optimize == 'adam': #将网络数数放到优化器
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
         # optimizer = AdaBound(pg0, lr=hyp['lr0'], final_lr=0.1)
     else:
@@ -272,25 +287,25 @@ def train():
     #     scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[round(opt.epochs * x) for x in [0.8, 0.9]], gamma=0.1)
     # scheduler.last_epoch = start_epoch - 1
 
-    def adjust_learning_rate(optimizer, gamma, epoch, iteration, epoch_size):
-        """调整学习率进行warm up和学习率衰减
-        """
-        step_index = 0
-        if epoch < 6:
-            # 对开始的6个epoch进行warm up
-            lr = 1e-6 + (hyp['lr0'] - 1e-6) * iteration / (epoch_size * 2)
-        else:
-            if epoch > opt.epochs * 0.7:
-                # 在进行总epochs的70%时，进行以gamma的学习率衰减
-                step_index = 1
-            if epoch > opt.epochs * 0.9:
-                # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
-                step_index = 2
-
-            lr = hyp['lr0'] * (gamma ** (step_index))
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
-        return lr
+    # def adjust_learning_rate(optimizer, gamma, epoch, iteration, epoch_size):
+    #     """调整学习率进行warm up和学习率衰减
+    #     """
+    #     step_index = 0
+    #     if epoch < 6:
+    #         # 对开始的6个epoch进行warm up
+    #         lr = 1e-6 + (hyp['lr0'] - 1e-6) * iteration / (epoch_size * 2)
+    #     else:
+    #         if epoch > opt.epochs * 0.7:
+    #             # 在进行总epochs的70%时，进行以gamma的学习率衰减
+    #             step_index = 1
+    #         if epoch > opt.epochs * 0.9:
+    #             # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
+    #             step_index = 2
+    #
+    #         lr = hyp['lr0'] * (gamma ** (step_index))
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] = lr
+    #     return lr
 
     # # Plot lr schedule
     # y = []
@@ -354,6 +369,35 @@ def train():
     t0 = time.time()
     best_result = [float("inf"), float("inf"), 0, float("inf"), 0, 0, 0, 0, float("inf"), float("inf"), 0, float("inf")]
 
+    sparse_decay = config.sparse_decay
+    sparse_decay[opt.s_end] = opt.s_decay
+    bn_opt = BNOptimizer(sparse_decay, opt.s)
+
+    # results, maps = test.test(cfg,
+    #     #                           data,
+    #     #                           batch_size=batch_size,
+    #     #                           img_size=opt.img_size,
+    #     #                           model=model,
+    #     #                           conf_thres=0.1,  # 0.1 for speed
+    #     #                           writer=tb_writer)
+
+    def adjust_learning_rate(optimizer, lr):
+        """调整学习率进行warm up和学习率衰减
+        """
+        # step_index = 0
+        # else:
+        #     if epoch > Epochs * 0.7:
+        #         # 在进行总epochs的70%时，进行以gamma的学习率衰减
+        #         step_index = 1
+        #     if epoch > Epochs * 0.9:
+        #         # 在进行总epochs的90%时，进行以gamma^2的学习率衰减
+        #         step_index = 2
+
+        # lr = hyp['lr0'] * (gamma ** (step_index))
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+        return lr
+
     print('Starting %s for %g epochs...' % ('prebias' if opt.prebias else 'training', epochs))
 
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
@@ -379,11 +423,13 @@ def train():
         msoft_target = torch.zeros(1).to(device)
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         sr_flag = get_sr_flag(epoch, opt.sr)
+        print("Current lr is {}".format(lr))
+
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             ni = i + nb * epoch  # number integrated batches (since train start)
 
             # 调整学习率，进行warm up和学习率衰减
-            lr = adjust_learning_rate(optimizer, 0.1, epoch, ni, nb)
+            lr = adjust_learning_rate(optimizer, lr)
             if i == 0:
                 print('learning rate:', lr)
 
@@ -453,7 +499,7 @@ def train():
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
 
-            BNOptimizer.updateBN(sr_flag, model.module_list, opt.s, prune_idx, epoch, idx2mask, opt)
+            bn_opt.updateBN(sr_flag, model.module_list, prune_idx, idx2mask)
 
             # Accumulate gradient for x batches before optimizing
             if ni % accumulate == 0:
@@ -496,24 +542,53 @@ def train():
 
         # Write Tensorboard results
         if tb_writer:
-            tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1],
-                                dataformats='HWC')
+            # tb_writer.add_image("result of epoch {}".format(epoch), cv2.imread("tmp.jpg")[:, :, ::-1],
+            #                     dataformats='HWC')
 
             x = list(mloss) + list(results) + [msoft_target]
             for xi, title in zip(x, titles):
                 tb_writer.add_scalar(title, xi, epoch)
 
             best_result = update_result(best_result, x)
-            bn_weights = gather_bn_weights(model.module_list, prune_idx)
-            bn_numpy = bn_weights.numpy()
-            with open(bn_file, "a+") as f:
-                f.write("{}: {}\n".format(epoch, str(np.mean(bn_numpy))))
-            tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
+
 
         # Update best mAP
         fitness, P = results[2], results[0]  # mAP
-        if fitness > best_fitness and P > 0.5:
+        if fitness > best_fitness and P > 0.5 and bn_opt.decayed:
             best_fitness = fitness
+
+        bn_weights = gather_bn_weights(model.module_list, prune_idx)
+        bn_numpy = bn_weights.numpy()
+        with open(bn_file, "a+") as f:
+            f.write("Epoch--->{}, lr--->{}, s--->{}, bn_ave--->{}, bn_var--->{}, map--->{}\n".
+                    format(epoch, lr, bn_opt.get_s(), str(np.mean(bn_numpy)), str(np.var(bn_numpy)), fitness))
+            bn_opt.set_flag(np.mean(bn_numpy), f)
+        tb_writer.add_histogram('bn_weights/hist', bn_numpy, epoch, bins='doane')
+
+        if bn_opt.decayed:
+            if int(opt.lr_decay) == 0:
+                stop = True
+            chkpt = {'epoch': epoch,
+                     'best_fitness': best_fitness,
+                     'model': model.module.state_dict() if type(
+                         model) is nn.parallel.DistributedDataParallel else model.state_dict(),
+                     'optimizer': None if final_epoch else optimizer.state_dict()}
+            torch.save(chkpt, wdir + 'sparse_end.pt')
+            early_stoping(list(results)[-3], list(results)[-2])#valGiou
+            if early_stoping.early_stop:
+                mixed_precision = False
+                optimizer, lr = lr_decay(optimizer, lr)
+                decay += 1
+                with open(bn_file, "a+") as f:
+                    f.write("---------------- lr decay {} -------------------\n".format(decay))
+                bn_opt.curr_s /= 5
+
+                torch.save(chkpt, wdir + 'lr_decay{}.pt'.format(decay))
+                if decay > len(patience_decay):
+                    stop = True
+                else:
+                    decay_epoch.append(epoch)
+                    early_stoping.reset(int(config.patience * patience_decay[decay]))
 
         # Save training results
         save = (not opt.nosave) or (final_epoch and not opt.evolve) or opt.prebias
@@ -543,6 +618,11 @@ def train():
 
             # Delete checkpoint
             del chkpt
+
+        if stop:
+            final_epoch = epoch + 1
+            print("Training finished at epoch {}".format(epoch))
+            break
 
             # end epoch ----------------------------------------------------------------------------------------------------
 
@@ -609,13 +689,21 @@ if __name__ == '__main__':
     parser.add_argument('--arc', type=str, default='defaultpw', help='yolo architecture')  # defaultpw, uCE, uBCE
     parser.add_argument('--prebias', action='store_true', help='transfer-learn yolo biases prior to training')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
-    parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1) or cpu')
+    parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1) or cpu')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--var', type=float, help='debug variable')
     parser.add_argument('--sparsity-regularization', '-sr', dest='sr', action='store_true',
                         help='train with channel sparsity regularization')
     parser.add_argument('--s', type=float, default=0.001, help='scale sparse rate')
+    parser.add_argument('--s_end', type=float, default=0.002, help='The end of sparse training')
+    parser.add_argument('--s_decay', type=float, default=0.01, help='decay of sparse training')
+
     parser.add_argument('--prune', type=int, default=1, help='0:nomal prune 1:other prune ')
+    parser.add_argument('--optimize', type=str, default='sgd', help='optimizer(adam,sgd)')
+    parser.add_argument('--LR', type=float, default=0.001, help='learning rate')
+    parser.add_argument('--lr_decay', default=0, help='whether lr drops')
+    parser.add_argument('--save_interval', default=1, type=int, help='interval')
+
 
     opt = parser.parse_args()
 

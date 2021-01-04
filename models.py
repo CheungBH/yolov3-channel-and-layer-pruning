@@ -461,6 +461,7 @@ def attempt_download(weights):
                 os.system('rm ' + weights)  # remove partial downloads
 
         assert os.path.exists(weights), msg  # download missing weights from Google Drive
+
 def layer_wise_time(layer,time,T):
     if layer == 'convolutional':
         T['conv'] +=time

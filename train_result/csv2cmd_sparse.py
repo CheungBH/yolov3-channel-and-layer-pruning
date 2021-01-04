@@ -2,7 +2,7 @@ import csv    #加载csv包便于读取csv文件
 import os
 from train_result.config import task_folder, batch_folder
 
-include_cuda = True
+include_cuda = False
 
 csv_name = "{}.csv".format(os.path.join(task_folder, batch_folder, batch_folder))
 out_name = csv_name[:-4] + ".txt"
@@ -13,9 +13,9 @@ data = [line for line in csv_reader_lines]
 opt = [item for item in data[0]]
 
 if include_cuda:
-    begin = "'CUDA_VISIBLE_DEVICES= python train.py "
+    begin = "'CUDA_VISIBLE_DEVICES= python train_sparse.py "
 else:
-    begin = "'python train.py "
+    begin = "'python train_sparse.py "
 
 
 def change_name(name):
@@ -40,8 +40,8 @@ for idx, mdl in enumerate(data[1:]):
             tmp += " "
             valid = True
 
-    tmp += "--expFolder {}".format(batch_folder)
-    tmp += "\t--expID {}".format(idx+1)
+    # tmp += "--expFolder {}".format(batch_folder)
+    # tmp += "\t--wdir {}".format(idx+1)
     cmd = begin + tmp + "'\n"
     if valid:
         cmds.append(cmd)

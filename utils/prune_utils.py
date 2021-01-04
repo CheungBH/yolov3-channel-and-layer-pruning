@@ -135,25 +135,45 @@ def write_cfg(cfg_file, module_defs):
     return cfg_file
 
 
-class BNOptimizer():
+class BNOptimizer:
+    def __init__(self, decays, s=0):
+        self.decayed = False
+        self.decay_time = 0
+        self.threshs, self.decays = [], []
+        for k, v in decays.items():
+            self.threshs.append(k)
+            self.decays.append(v)
+        self.curr_s, self.base_s = s, s
 
-    @staticmethod
-    def updateBN(sr_flag, module_list, s, prune_idx, epoch, idx2mask=None, opt=None):
+    def updateBN(self, sr_flag, module_list, prune_idx, idx2mask=None):
         if sr_flag:
-            bn_weights = gather_bn_weights(module_list, prune_idx)
-            bn_numpy = bn_weights.numpy()
-            if np.mean(bn_numpy)<0.01:
-                s=s*0.01
-            # s = s if epoch <= opt.epochs * 0.35 else s * 0.01
             for idx in prune_idx:
                 # Squential(Conv, BN, Lrelu)
                 bn_module = module_list[idx][1]
-                bn_module.weight.grad.data.add_(s * torch.sign(bn_module.weight.data))  # L1
+                bn_module.weight.grad.data.add_(self.curr_s * torch.sign(bn_module.weight.data))  # L1
             if idx2mask:
                 for idx in idx2mask:
                     bn_module = module_list[idx][1]
                     #bn_module.weight.grad.data.add_(0.5 * s * torch.sign(bn_module.weight.data) * (1 - idx2mask[idx].cuda()))
-                    bn_module.weight.grad.data.sub_(0.99 * s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
+                    bn_module.weight.grad.data.sub_(0.99 * self.curr_s * torch.sign(bn_module.weight.data) * idx2mask[idx].cuda())
+
+    def set_flag(self, val, file):
+        if self.decay_time < len(self.decays):
+            if val < self.threshs[self.decay_time]:
+                self.curr_s = self.base_s * self.decays[self.decay_time]
+                self.decay_time += 1
+                file.write("---------------- Sparse decay {} -------------------\n".format(self.decay_time))
+                if self.decay_time == len(self.decays):
+                    self.decayed = True
+                    file.write("---------------- Sparsity End -------------------\n")
+        elif not self.decayed:
+            self.decayed = True
+            file.write("---------------- Sparsity End -------------------\n")
+        else:
+            pass
+
+    def get_s(self):
+        return self.curr_s
 
 
 def obtain_quantiles(bn_weights, num_quantile=5):
