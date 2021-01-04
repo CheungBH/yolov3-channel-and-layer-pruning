@@ -231,8 +231,9 @@ class Darknet(nn.Module):
         img_size = x.shape[-2:]
         layer_outputs = []
         output = []
-
+        T = dict.fromkeys(['conv','route','shortcut','yolo'], 0)
         for i, (mdef, module) in enumerate(zip(self.module_defs, self.module_list)):
+            start = time.time()
             mtype = mdef['type']
             if mtype in ['convolutional', 'upsample', 'maxpool']:
                 x = module(x)
@@ -253,7 +254,10 @@ class Darknet(nn.Module):
                 x = module(x, img_size)
                 output.append(x)
             layer_outputs.append(x if i in self.routs else [])
-
+            end = time.time()
+            layer_time = end - start
+            layer_wise_time(mtype,layer_time,T)
+        # print(T)
         if self.training:
             return output
         elif ONNX_EXPORT:
@@ -457,6 +461,16 @@ def attempt_download(weights):
                 os.system('rm ' + weights)  # remove partial downloads
 
         assert os.path.exists(weights), msg  # download missing weights from Google Drive
+def layer_wise_time(layer,time,T):
+    if layer == 'convolutional':
+        T['conv'] +=time
+    elif layer == 'route':
+        T['route']+=time
+    elif layer == 'shortcut':
+        T['shortcut']+=time
+    elif layer == 'yolo':
+        T['yolo']+=time
+
 if __name__ == '__main__':
-    convert(cfg='/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg',
-            weights='/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/best.pt')
+    convert(cfg='/media/hkuit164/WD20EJRX/result/best_finetune/rgb/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg',
+            weights='/media/hkuit164/WD20EJRX/result/best_finetune/rgb/SLIM-prune_0.95_keep_0.1/best.pt')
