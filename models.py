@@ -471,7 +471,7 @@ def layer_wise_time(layer,time,T):
         T['shortcut']+=time
     elif layer == 'yolo':
         T['yolo']+=time
-
+print('')
 if __name__ == '__main__':
     convert(cfg='/media/hkuit164/WD20EJRX/result/best_finetune/rgb/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg',
             weights='/media/hkuit164/WD20EJRX/result/best_finetune/rgb/SLIM-prune_0.95_keep_0.1/best.pt')
