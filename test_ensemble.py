@@ -9,37 +9,47 @@ from utils.utils import *
 import copy
 import box_postprocess as bp
 import cv2
+import numpy as np
+
 def Vis(path,boxes,black_path,black_box,merge_box):
     # print(boxes[0].tolist())
     img = cv2.imread(path[0])
+    print(path[0].split('/')[5])
     img = cv2.resize(img, (416, 416))
-    for box in boxes[0].tolist():
-        # print(box)
-        # box = boxes[0].tolist()[0]
-        prob =str(round(box[4],2))
-        img = cv2.rectangle(img,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,255,255),2)
-        cv2.putText(img,prob,(int(box[0]),int(box[1])),cv2.FONT_HERSHEY_PLAIN, 2, (0,255,0), 2)
-    cv2.imshow("gray",img)
-    cv2.waitKey(0)
+    if boxes[0] is not None:
+        for box in boxes[0].tolist():
+            # print(box)
+            # box = boxes[0].tolist()[0]
+            prob =str(round(box[4],2))
+            img = cv2.rectangle(img,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,255,255),2)
+            cv2.putText(img,prob,(int(box[0]),int(box[1])),cv2.FONT_HERSHEY_PLAIN, 2, (0,255,0), 2)
+    # cv2.imshow("gray",img)
+    # cv2.waitKey(0)
     #black_img
     img_black = cv2.imread(black_path[0])
     img_black = cv2.resize(img_black,(416,416))
-    for b_box in black_box[0].tolist():
-    # b_box = black_box[0].tolist()[0]
-        prob =str(round(b_box[4],2))
-        img_black = cv2.rectangle(img_black,(int(b_box[0]),int(b_box[1])),(int(b_box[2]),int(b_box[3])),(0,255,255),2)
-        cv2.putText(img_black,prob,(int(b_box[0]),int(b_box[1])),cv2.FONT_HERSHEY_PLAIN, 2, (0,255,0), 2)
-    cv2.imshow("black",img_black)
-    cv2.waitKey(0)
+    if black_box[0] is not None:
+        for b_box in black_box[0].tolist():
+        # b_box = black_box[0].tolist()[0]
+            prob =str(round(b_box[4],2))
+            img_black = cv2.rectangle(img_black,(int(b_box[0]),int(b_box[1])),(int(b_box[2]),int(b_box[3])),(0,255,255),2)
+            cv2.putText(img_black,prob,(int(b_box[0]),int(b_box[1])),cv2.FONT_HERSHEY_PLAIN, 2, (0,255,0), 2)
+    # cv2.imshow("black",img_black)
+    # cv2.waitKey(0)
     img_merge = cv2.imread(black_path[0])
     img_merge = cv2.resize(img_merge,(416,416))
-    for m_box in black_box[0].tolist():
-        prob = str(round(m_box[4], 2))
-        img_black = cv2.rectangle(img_merge, (int(m_box[0]), int(m_box[1])), (int(m_box[2]), int(m_box[3])),
-                                  (0, 255, 255), 2)
-        cv2.putText(img_merge, prob, (int(m_box[0]), int(m_box[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
-    cv2.imshow("merge", img_merge)
+    if merge_box[0] is not None:
+        for m_box in merge_box.tolist():
+            # print(m_box)
+            prob = str(round(m_box[4], 2))
+            img_merge = cv2.rectangle(img_merge, (int(m_box[0]), int(m_box[1])), (int(m_box[2]), int(m_box[3])),
+                                      (0, 255, 255), 2)
+            cv2.putText(img_merge, prob, (int(m_box[0]), int(m_box[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
+    all_img = np.hstack([img,img_black,img_merge])
+    cv2.imshow("merge", all_img)
+    # cv2.imwrite(os.path.join('./result/merge_result', path[0].split('/')[5]), all_img)
     cv2.waitKey(0)
+
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def ensemble_test(cfg,
          black_cfg,
@@ -111,12 +121,13 @@ def ensemble_test(cfg,
     write_tb = True
     jdict, stats, ap, ap_class = [], [], [], []
     all_path = []
+    b_list = list(black_dataloader)
     for batch_i, (imgs, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         # black_targets = black_dataloader[batch_i][1].to(device)
-        print("gray_path",paths)
-        black_imgs = list(black_dataloader)[batch_i][0].to(device)
-        black_path = list(black_dataloader)[batch_i][2]
-        print("black_path",black_path)
+        # print("gray_path",paths)
+        black_imgs = b_list[batch_i][0].to(device)
+        black_path = b_list[batch_i][2]
+        # print("black_path",black_path)
         black_imgs = black_imgs.to(device)
         targets = targets.to(device)
         imgs = imgs.to(device)
@@ -128,6 +139,7 @@ def ensemble_test(cfg,
 
         # Run model
         inf_out, train_out = model(imgs)  # inference and training outputs
+        print(imgs.shape)
         #black model
         black_inf_out, black_train_out = black_model(black_imgs)
         # Compute loss
@@ -141,14 +153,14 @@ def ensemble_test(cfg,
         output = non_max_suppression(inf_out, conf_thres=conf_thres, nms_thres=nms_thres)
 
         black_output = non_max_suppression(black_inf_out, conf_thres=conf_thres, nms_thres=nms_thres)
-        print("gray",output)
-        print("black",black_output)
+        # print("gray",output)
+        # print("black",black_output)
 
         output_list = []
         for i in range(len(output)):
             BE = bp.BoxEnsemble()
             merge_output = BE.ensemble_box(output[i],black_output[i])
-            print("merge:",merge_output)
+            # print("merge:",merge_output)
             output_list.append(merge_output)
 
         Vis(paths, output, black_path, black_output, merge_output)
@@ -234,11 +246,13 @@ def ensemble_test(cfg,
 
 
 if __name__ == '__main__':
-    gray_model = '/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/best.weights'
-    gray_cfg = '/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg'
-    black_model = '/media/hkuit164/WD20EJRX/result/best_finetune/black/SLIM-prune_0.93_keep_0.1/best.weights'
-    black_cfg = '/media/hkuit164/WD20EJRX/result/best_finetune/black/SLIM-prune_0.93_keep_0.1/prune_0.93_keep_0.1.cfg'
-    data = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/ensemble/gray/all.data'
-    black_data = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/ensemble/black/all.data'
+    gray_model = '/home/user/Documents/gray/SLIM-prune_0.95_keep_0.1/best.weights'
+    # gray_model = '/home/user/Documents/yolov3-channel-and-layer-pruning/weights/gray/26/best.weights'
+    gray_cfg = '/home/user/Documents/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg'
+    # gray_cfg = '/home/user/Documents/yolov3-channel-and-layer-pruning/cfg/yolov3-original-1cls-leaky.cfg'
+    black_model = '/home/user/Documents/black/SLIM-prune_0.93_keep_0.1/best.weights'
+    black_cfg = '/home/user/Documents/black/SLIM-prune_0.93_keep_0.1/prune_0.93_keep_0.1.cfg'
+    data = '/home/user/Documents/yolov3-channel-and-layer-pruning/data/ensemble/gray/all.data'
+    black_data = '/home/user/Documents/yolov3-channel-and-layer-pruning/data/ensemble/black/all.data'
     with torch.no_grad():
         ensemble_test(gray_cfg,black_cfg,data,black_data,black_model,gray_model)

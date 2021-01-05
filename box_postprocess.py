@@ -79,10 +79,10 @@ def cal_area(box):
     return area
 
 
-def nms(dets, conf=0.04):
+def nms(dets, conf=0.3):
     if len(dets) < 2:
         return dets
-
+    dets = torch.stack(sorted(dets, key=lambda x: x.tolist()[-3],reverse= True),0)
     max_detections = []
     while dets.size(0):
         # Get detection with highest confidence and save as max detection
