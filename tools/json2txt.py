@@ -20,7 +20,7 @@ json_file = '/home/hkuit164/Documents/tile_round1_train_20201231/train_annos.jso
 
 datas = json.load(open(json_file, 'r'))
 
-ana_txt_save_path = "./tianchi/train/"  # 保存的路径
+ana_txt_save_path = "../tianchi/train/"  # 保存的路径
 if not os.path.exists(ana_txt_save_path):
     os.makedirs(ana_txt_save_path)
 
