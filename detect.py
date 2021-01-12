@@ -35,7 +35,7 @@ def detect(save_txt=False, save_img=True):
     # Export mode
     if ONNX_EXPORT:
         img = torch.zeros((1, 3) + img_size)  # (1, 3, 320, 192)
-        torch.onnx.export(model, img, 'weights/export.onnx', verbose=True)
+        torch.onnx.export(model, img, 'weights/export.onnx', verbose=True,opset_version=11)
         return
 
     # Half precision
@@ -60,6 +60,7 @@ def detect(save_txt=False, save_img=True):
     # Run inference
     t0 = time.time()
     for path, img, im0s, vid_cap in dataset:
+
         t = time.time()
 
         # Get detections
@@ -69,11 +70,20 @@ def detect(save_txt=False, save_img=True):
             img = img.unsqueeze(0)
 
         pred, _ = model(img)
+        ONNX=True
+        if ONNX:
+            import onnxruntime as ort
+            img = img.cpu().numpy()
+            ort_session = ort.InferenceSession('/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/weights/export.onnx')
+            obj,boxes = ort_session.run(None, {'input.1': img})
+            boxes = boxes*416
+            pred_onnx=torch.cat((torch.from_numpy(boxes),torch.from_numpy(obj),torch.ones([obj.shape[0],1])),1)
+            pred_onnx = pred_onnx[np.newaxis, :]
 
         if opt.half:
             pred = pred.float()
 
-        for i, det in enumerate(non_max_suppression(pred, opt.conf_thres, opt.nms_thres)):  # detections per image
+        for i, det in enumerate(non_max_suppression(pred_onnx, opt.conf_thres, opt.nms_thres)):  # detections per image
             if webcam:  # batch_size >= 1
                 p, s, im0 = path[i], '%g: ' % i, im0s[i]
             else:
@@ -95,12 +105,15 @@ def detect(save_txt=False, save_img=True):
                     if save_txt:  # Write to file
                         with open(save_path + '.txt', 'a') as file:
                             file.write(('%g ' * 6 + '\n') % (*xyxy, cls, conf))
+                            print((*xyxy, cls, conf))
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (classes[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
 
             print('%sDone. (%.3fs)' % (s, time.time() - t))
+            cv2.imshow(p, im0)
+            cv2.waitKey(0)
             # Stream results
             if view_img:
                 cv2.imshow(p, im0)
