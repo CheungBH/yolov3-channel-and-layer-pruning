@@ -16,7 +16,7 @@ from utils.compute_flops import print_model_param_flops, print_model_param_nums
 
 # --data data/swim_enhanced/enhanced.data --cfg cfg/yolov3-1cls.cfg --weights weights/darknet53.conv.74 --epoch 300
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -31,10 +31,10 @@ titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
 hyp = {'giou': 1.582,  # giou loss gain
        'cls': 27.76,  # cls loss gain  (CE=~1.0, uCE=~20)
        'cls_pw': 1.446,  # cls BCELoss positive_weight
-       'obj': 21.35,  # obj loss gain (*=80 for uBCE with 80 classes)
+       'obj': 41.35,  # obj loss gain (*=80 for uBCE with 80 classes)
        'obj_pw': 3.941,  # obj BCELoss positive_weight
        'iou_t': 0.2635,  # iou training threshold
-       'lr0': 0.002324,  # initial learning rate (SGD=1E-3, Adam=9E-5)
+       'lr0': 0.0002,  # initial learning rate (SGD=1E-3, Adam=9E-5)
        'lrf': -4.,  # final LambdaLR learning rate = lr0 * (10 ** lrf)
        'momentum': 0.97,  # SGD momentum
        'weight_decay': 0.0004569,  # optimizer weight decay
@@ -454,7 +454,19 @@ def train():
                     scaled_loss.backward()
             else:
                 loss.backward()
-                
+            la105,la93,la81 =list(model.named_parameters())[105][1].grad,list(model.named_parameters())[93][1].grad,\
+                             list(model.named_parameters())[81][1].grad
+            print(la105)
+            la105, la93, la81 = torch.norm(la105),torch.norm(la93),torch.norm(la81)
+            print('105: ',la105)
+            print('93: ', la93)
+            print('81: ', la81)
+            print(model.module_defs)
+            print(list(model.module))
+            # for name, par in model.named_parameters():
+            #     print('-->name:', name, )
+            # '-->grad_requirs:', par.requires_grad, ' -->grad_value:', par.grad
+
             idx2mask = None
             # if opt.sr and opt.prune==1 and epoch > opt.epochs * 0.5:
             #     idx2mask = get_mask2(model, prune_idx, 0.85)
@@ -546,7 +558,7 @@ def train():
                 torch.save(chkpt, best)
 
             # Save backup every 10 epochs (optional)
-            if epoch > 0 and epoch % 10 == 0:
+            if epoch > 0 and epoch % 1 == 0:
                 torch.save(chkpt, wdir + 'backup%g.pt' % epoch)
 
             # Delete checkpoint

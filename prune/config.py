@@ -17,8 +17,8 @@ only_metric = False
 prune = [0.95,0.96,0.97]
 shortcut_p = [0.95,0.96,0.97]
 layer_num = [8, 12]
-slim_params = [(0.95, 0.1)]
-all_prune_params = [(10, 0.95, 0.01), (15, 0.95, 0.01)]
+slim_params = [(0.95, 0.1),(0.95, 0.01),(0.95, 0.05),(0.97, 0.1),(0.97, 0.01),(0.97, 0.05)]
+all_prune_params = [(10, 0.95, 0.01), (15, 0.95, 0.01),(10, 0.97, 0.01), (15, 0.97, 0.01)]
 
 # Finetune option
 finetune_folders = [

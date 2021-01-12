@@ -9,6 +9,7 @@ import argparse
 from utils.compute_flops import print_model_param_nums, print_model_param_flops
 import csv
 
+
 def obtain_avg_forward_time(input, model, repeat=200):
     model.eval()
     start = time.time()
@@ -18,9 +19,12 @@ def obtain_avg_forward_time(input, model, repeat=200):
     avg_infer_time = (time.time() - start) / repeat
 
     return avg_infer_time, output
+
+
 def write_info(m, metric, string):
     params = print_model_param_nums(m)
     flops = print_model_param_flops(m)
+    print('flops: ',flops)
     if string == "origin":
         f.write(('\n' + '%50s' * 1) % "origin")
     else:
@@ -52,11 +56,13 @@ if __name__ == '__main__':
     img_size = opt.img_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Darknet(opt.cfg, (img_size, img_size)).to(device)
+    flops = print_model_param_flops(model)
+    print('flops: ',flops)
     if opt.weights.endswith('.pt'):
         model.load_state_dict(torch.load(opt.weights)['model'])
     else:
         load_darknet_weights(model, opt.weights)
-    print('\nloaded weights from ',opt.weights)
+    print('\nloaded weights from ', opt.weights)
 
     folder_str = f'prune_{percent}'
     if opt.weights.endswith(".pt"):
@@ -73,18 +79,17 @@ if __name__ == '__main__':
     os.makedirs(dest_folder, exist_ok=True)
     prune_res = open(os.path.join(dest_folder, "prune_log.txt"), "a+")
 
-    eval_model = lambda model:test(opt.cfg, opt.data, 
-        weights=opt.weights, 
-        batch_size=16,
-         img_size=img_size,
-         iou_thres=0.5,
-         conf_thres=0.1,
-         nms_thres=0.5,
-         save_json=False,
-         model=model)
-    obtain_num_parameters = lambda model:sum([param.nelement() for param in model.parameters()])
+    eval_model = lambda model: test(opt.cfg, opt.data,
+                                    weights=opt.weights,
+                                    batch_size=16,
+                                    img_size=img_size,
+                                    iou_thres=0.5,
+                                    conf_thres=0.1,
+                                    nms_thres=0.5,
+                                    save_json=False,
+                                    model=model)
+    obtain_num_parameters = lambda model: sum([param.nelement() for param in model.parameters()])
     random_input = torch.rand((1, 3, img_size, img_size)).to(device)
-
 
     if not only_metric:
         print("\nlet's test the original model first:")
@@ -109,8 +114,7 @@ if __name__ == '__main__':
         else:
             f = open(res_file, "a+")
 
-
-    CBL_idx, Conv_idx, prune_idx= parse_module_defs(model.module_defs)
+    CBL_idx, Conv_idx, prune_idx = parse_module_defs(model.module_defs)
 
     bn_weights = gather_bn_weights(model.module_list, prune_idx)
 
@@ -123,14 +127,15 @@ if __name__ == '__main__':
     highest_thre = min(highest_thre)
 
     # 找到highest_thre对应的下标对应的百分比
-    percent_limit = (sorted_bn==highest_thre).nonzero().item()/len(bn_weights)
+    percent_limit = (sorted_bn == highest_thre).nonzero().item() / len(bn_weights)
 
     print(f'Suggested Gamma threshold should be less than {highest_thre:.4f}.')
     print(f'The corresponding prune ratio is {percent_limit:.3f}, but you can set higher.')
     print(f'Suggested Gamma threshold should be less than {highest_thre:.4f}.', file=prune_res)
     print(f'The corresponding prune ratio is {percent_limit:.3f}, but you can set higher.', file=prune_res)
 
-    #%%
+
+    # %%
     def prune_and_eval(model, sorted_bn, percent=.0):
         model_copy = deepcopy(model)
         thre_index = int(len(sorted_bn) * percent)
@@ -141,7 +146,6 @@ if __name__ == '__main__':
 
         remain_num = 0
         for idx in prune_idx:
-
             bn_module = model_copy.module_list[idx][1]
 
             mask = obtain_bn_mask(bn_module, thre)
@@ -155,19 +159,22 @@ if __name__ == '__main__':
                 mAP = eval_model(model_copy)[0][2]
 
             print(f'Number of channels has been reduced from {len(sorted_bn)} to {remain_num}')
-            print(f'Prune ratio: {1-remain_num/len(sorted_bn):.3f}')
+            print(f'Prune ratio: {1 - remain_num / len(sorted_bn):.3f}')
             print(f"mAP of the 'pruned' model is {mAP:.4f}")
 
             print(f'Number of channels has been reduced from {len(sorted_bn)} to {remain_num}', file=prune_res)
-            print(f'Prune ratio: {1-remain_num/len(sorted_bn):.3f}', file=prune_res)
+            print(f'Prune ratio: {1 - remain_num / len(sorted_bn):.3f}', file=prune_res)
             print(f"mAP of the 'pruned' model is {mAP:.4f}", file=prune_res)
 
         return thre
 
+
     print('the required prune percent is', percent)
     print('the required prune percent is', percent, file=prune_res)
     threshold = prune_and_eval(model, sorted_bn, percent)
-    #%%
+
+
+    # %%
     def obtain_filters_mask(model, thre, CBL_idx, prune_idx):
 
         pruned = 0
@@ -208,9 +215,10 @@ if __name__ == '__main__':
 
         return num_filters, filters_mask
 
+
     num_filters, filters_mask = obtain_filters_mask(model, threshold, CBL_idx, prune_idx)
 
-    #%%
+    # %%
     CBLidx2mask = {idx: mask.astype('float32') for idx, mask in zip(CBL_idx, filters_mask)}
 
     pruned_model = prune_model_keep_size2(model, CBL_idx, CBL_idx, CBLidx2mask)
@@ -221,26 +229,23 @@ if __name__ == '__main__':
         with torch.no_grad():
             eval_model(pruned_model)
 
-
-    #%%
+    # %%
     compact_module_defs = deepcopy(model.module_defs)
     for idx, num in zip(CBL_idx, num_filters):
         assert compact_module_defs[idx]['type'] == 'convolutional'
         compact_module_defs[idx]['filters'] = str(num)
 
-    #%%
+    # %%
     compact_model = Darknet([model.hyperparams.copy()] + compact_module_defs, (img_size, img_size)).to(device)
     compact_nparameters = obtain_num_parameters(compact_model)
 
     init_weights_from_loose_model(compact_model, pruned_model, CBL_idx, Conv_idx, CBLidx2mask)
 
-    #%%
+    # %%
     # 在测试集上测试剪枝后的模型, 并统计模型的参数数量
     print('testing the mAP of final pruned model')
     with torch.no_grad():
         compact_model_metric = eval_model(compact_model)
-
-
 
     if not only_metric:
         # %%
@@ -261,19 +266,21 @@ if __name__ == '__main__':
         ]
         print(AsciiTable(metric_table).table)
         print(AsciiTable(metric_table).table, file=open(os.path.join(dest_folder, "metric.txt"), "w"))
-        #save csv file
+        # save csv file
         csv_path = os.path.join("prune_result", "{}-{}".
-                               format(opt.weights.split("/")[2], model_name))
-        exist = os.path.exists(os.path.join(csv_path,'prune.csv'))
-        with open(os.path.join(csv_path,'prune.csv'),'a+') as f:
+                                format(opt.weights.split("/")[2], model_name))
+        exist = os.path.exists(os.path.join(csv_path, 'prune.csv'))
+        with open(os.path.join(csv_path, 'prune.csv'), 'a+') as f:
             f_csv = csv.writer(f)
             if not exist:
                 title = [
-                    ['model','mAP','para','time'],
-                    ['original',f'{origin_model_metric[0][2]:.6f}',f"{origin_nparameters}",f'{pruned_forward_time:.4f}']
+                    ['model', 'mAP', 'para', 'time'],
+                    ['original', f'{origin_model_metric[0][2]:.6f}', f"{origin_nparameters}",
+                     f'{pruned_forward_time:.4f}']
                 ]
                 f_csv.writerows(title)
-            info_list = [f"ORDINARY-{folder_str}",f'{compact_model_metric[0][2]:.6f}',f"{compact_nparameters}", f'{compact_forward_time:.4f}']
+            info_list = [f"ORDINARY-{folder_str}", f'{compact_model_metric[0][2]:.6f}', f"{compact_nparameters}",
+                         f'{compact_forward_time:.4f}']
             f_csv.writerow(info_list)
         # %%
         # 生成剪枝后的cfg文件并保存模型

@@ -18,7 +18,7 @@ try:  # Mixed precision training https://github.com/NVIDIA/apex
     from apex import amp
 except:
     mixed_precision = False  # not installed
-
+# os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 titles = ['GIoU', 'Objectness', 'Classification', 'Train loss',
           'Precision', 'Recall', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification', 'soft_loss']
 # import netron
@@ -521,16 +521,16 @@ if __name__ == '__main__':
 
     tb_writer = None
     if not opt.evolve:  # Train normally
-        try:
-            train()  # train normally
-        except  :
-            if os.path.exists('error.txt'):
-                os.remove('error.txt')
-            with open('error.txt','a+') as f:
-                f.write(opt.expID)
-                f.write('\n')
-                f.write('----------------------------------------------\n')
-                traceback.print_exc(file=f)
+        # try:
+        train()  # train normally
+        # except  :
+        #     if os.path.exists('error.txt'):
+        #         os.remove('error.txt')
+        #     with open('error.txt','a+') as f:
+        #         f.write(opt.expID)
+        #         f.write('\n')
+        #         f.write('----------------------------------------------\n')
+        #         traceback.print_exc(file=f)
 
 
     else:  # Evolve hyperparameters (optional)
