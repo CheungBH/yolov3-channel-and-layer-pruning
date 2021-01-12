@@ -12,9 +12,8 @@ import cv2
 import numpy as np
 
 def Vis(path,boxes,black_path,black_box,merge_box):
-    # print(boxes[0].tolist())
+
     img = cv2.imread(path[0])
-    print(path[0].split('/')[5])
     img = cv2.resize(img, (416, 416))
     if boxes[0] is not None:
         for box in boxes[0].tolist():
@@ -38,7 +37,7 @@ def Vis(path,boxes,black_path,black_box,merge_box):
     # cv2.waitKey(0)
     img_merge = cv2.imread(black_path[0])
     img_merge = cv2.resize(img_merge,(416,416))
-    if merge_box[0] is not None:
+    if merge_box is not None:
         for m_box in merge_box.tolist():
             # print(m_box)
             prob = str(round(m_box[4], 2))
@@ -60,7 +59,7 @@ def ensemble_test(cfg,
          batch_size=1,
          img_size=416,
          iou_thres=0.5,
-         conf_thres=0.5,
+         conf_thres=0.7,
          nms_thres=0.5,):
     # Initialize/load model and set device
     device = ''
@@ -139,7 +138,6 @@ def ensemble_test(cfg,
 
         # Run model
         inf_out, train_out = model(imgs)  # inference and training outputs
-        print(imgs.shape)
         #black model
         black_inf_out, black_train_out = black_model(black_imgs)
         # Compute loss
@@ -246,13 +244,13 @@ def ensemble_test(cfg,
 
 
 if __name__ == '__main__':
-    gray_model = '/home/user/Documents/gray/SLIM-prune_0.95_keep_0.1/best.weights'
+    gray_model = '/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/best.weights'
     # gray_model = '/home/user/Documents/yolov3-channel-and-layer-pruning/weights/gray/26/best.weights'
-    gray_cfg = '/home/user/Documents/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg'
+    gray_cfg = '/media/hkuit164/WD20EJRX/result/best_finetune/gray/SLIM-prune_0.95_keep_0.1/prune_0.95_keep_0.1.cfg'
     # gray_cfg = '/home/user/Documents/yolov3-channel-and-layer-pruning/cfg/yolov3-original-1cls-leaky.cfg'
-    black_model = '/home/user/Documents/black/SLIM-prune_0.93_keep_0.1/best.weights'
-    black_cfg = '/home/user/Documents/black/SLIM-prune_0.93_keep_0.1/prune_0.93_keep_0.1.cfg'
-    data = '/home/user/Documents/yolov3-channel-and-layer-pruning/data/ensemble/gray/all.data'
-    black_data = '/home/user/Documents/yolov3-channel-and-layer-pruning/data/ensemble/black/all.data'
+    black_model = '/media/hkuit164/WD20EJRX/result/best_finetune/black/SLIM-prune_0.93_keep_0.1/best.weights'
+    black_cfg = '/media/hkuit164/WD20EJRX/result/best_finetune/black/SLIM-prune_0.93_keep_0.1/prune_0.93_keep_0.1.cfg'
+    data = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/ensemble/gray/all.data'
+    black_data = '/media/hkuit164/WD20EJRX/yolov3-channel-and-layer-pruning/data/ensemble/black/all.data'
     with torch.no_grad():
         ensemble_test(gray_cfg,black_cfg,data,black_data,black_model,gray_model)
