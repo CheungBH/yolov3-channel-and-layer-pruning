@@ -1,6 +1,4 @@
-
-    	ifstream in("1.txt");
-rt torch
+import torch
 from ensemble_util import cropBox, im_to_torch ,bbox_iou
 from config import config
 import cv2
@@ -136,5 +134,4 @@ class BoxEnsemble:
                 if cal_area(box) < thresh:
                     keep_idx.append(idx)
         return keep_idx
-
 
