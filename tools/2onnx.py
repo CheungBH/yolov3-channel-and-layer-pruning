@@ -19,7 +19,7 @@ output_names = ["bboxes", "classes"]
 torch.onnx.export(
     model,
     dummy_input,
-    "models/rgb146.onnx",
+    "./rgb146.onnx",
     verbose=True,
     input_names=input_names,
     output_names=output_names)
